@@ -8,13 +8,33 @@ Public NameOfFormatBefore As String
 Dim logFile As Object
 Dim logFilePath As String
 Dim logFileName As String
+Dim NameContainsSpecialChars As Boolean
 
 
 Sub check_word_file()
 
 '----------------------------------------------------------
+'----- CHECK FILE NAME -----
+'----------------------------------------------------------
+MsgBox "Launching CHECK FILE NAME"
+
+Dim fileName As String
+fileName = ActiveDocument.Name
+NameContainsSpecialChars = False
+'MsgBox fileName
+BadChar (fileName)
+If NameContainsSpecialChars = True Then
+    MsgBox "Dateiname enthält Sonderzeichen."
+    Exit Sub
+End If
+
+MsgBox "CHECK FILE NAME done"
+
+
+'----------------------------------------------------------
 '----- DELETE LOG FILE, IF EXISTS -----
 '----------------------------------------------------------
+MsgBox "Launching DELETE LOG FILE"
 
 ' Set name of log file
 logFileName = "log" & ".txt"
@@ -27,21 +47,25 @@ If Dir(logFilePath) <> "" Then
     Kill logFilePath
 End If
 
+MsgBox "DELETE LOG FILE done"
+
+
 '----------------------------------------------------------
 '----- SET HEADER FORMATS -----
 '----------------------------------------------------------
-
+MsgBox "Launching SET HEADER FORMATS"
 ' SET FORMAT OF FIRST PARAGRAPH
-Paragraphs.First.Range.Select
+ActiveDocument.Paragraphs.First.Range.Select
 search_firstPara
 'Format will be set in Sub if check is TRUE
 
 ' SET FORMAT OF SECOND PARAGRAPH
-Paragraphs(2).Style = "SuS_Headline"
+ActiveDocument.Paragraphs(2).Style = "SuS_Headline"
 
 ' SET FORMAT OF THIRD PARAGRAPH
-Paragraphs(3).Style = "SuS_Subhead1"
+ActiveDocument.Paragraphs(3).Style = "SuS_Subhead1"
 
+MsgBox "SET HEADER FORMATS done"
 
 '----------------------------------------------------------
 '----- CHECK NUMBER OF FORMAT INSTANCES  -----
@@ -111,9 +135,57 @@ count_style_modulo
 '----- END OF SCRIPT MESSAGE -----
 '----------------------------------------------------------
 
-MsgBox "Das Skript hat fertig."
+MsgBox "Ich habe fertig."
 
 End Sub
+
+
+
+'----------------------------------------------------------
+'----- CHECK FILE NAME -----
+'----------------------------------------------------------
+ 
+Function BadChar(strText As String) As Long
+     '
+     '****************************************************************************************
+     '       Title       BadChar
+     '       Target Application:  any
+     '       Function    test for the presence of charcters that can not be used in
+     '                   the name of an xlsheet, file, directory, etc
+     '
+     '           if no bad characters are found, BadChar = 0 on return
+     '           if any bad character is found, BadChar = i where i is the index (in strText)
+     '               where bad char was found
+     '       Limitations:    passed string variable should not include any path seperator
+     '                           characters
+     '                       stops and exits when 1st bad char is found so # of bad chars
+     '                           is not really known
+     '       Passed Values:
+     '           strText     [in, string]  text string to be examined
+     '
+     '****************************************************************************************
+     '
+     '
+    Dim BadChars    As String
+    Dim I           As Long
+    Dim J           As Long
+     
+    ' Use Unicode for German Umlaute: https://stackoverflow.com/questions/22017723/regex-for-umlaut '
+    BadChars = "ß:\/? *[](){}"
+    'BadChars = ":\/?*[]"
+    For I = 1 To Len(BadChars)
+        J = InStr(strText, Mid(BadChars, I, 1))
+        If J > 0 Then
+            BadChar = J
+            NameContainsSpecialChars = True
+            Exit Function
+        End If
+    Next I
+    BadChar = 0
+     
+End Function
+
+
 
 Sub count_style_onlyone()
 Dim l As Integer
@@ -184,7 +256,7 @@ formatClosed = number1 Mod number2
 If formatClosed = 0 Then
     'MsgBox "Modulo = 0 – alle Kästen werden auch geschlossen."
 Else
-    WriteLogFile "Absatzformat " & NameOfFormat &  " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
+    WriteLogFile "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
 End If
 reset_search
 End Sub
