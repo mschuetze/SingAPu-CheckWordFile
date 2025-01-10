@@ -97,13 +97,21 @@ IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameO
 
 ' MOD Dividiert zwei Zahlen und gibt nur den Rest zurück.
 'Result = number1 Mod number2
-' Wenn Rest gleich 0 dann ist es ein ganzzahliges Vielfaches von 2 – wird also geöffnet UND geschlossen
+'number1 wäre die Anzahl der Vorkommen von Format X
+'number2 wäre 2
+' Wenn Rest gleich 0, dann ist es ein ganzzahliges Vielfaches von 2 – wird also geöffnet UND geschlossen
+
+' CHECK FOR SuS_Kastenheadline
+NameOfFormat = "SuS_Kastenheadline"
+count_style_modulo
+
+
 
 '----------------------------------------------------------
 '----- END OF SCRIPT MESSAGE -----
 '----------------------------------------------------------
 
-MsgBox "Das Skript ist fertig."
+MsgBox "Das Skript hat fertig."
 
 End Sub
 
@@ -128,6 +136,7 @@ End If
 reset_search
 End Sub
 
+
 Sub count_style_lessthantwo()
 Dim l As Integer
 reset_search
@@ -145,6 +154,37 @@ If l < 2 Then
 Else
     WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal (oder gar nicht) vorkommen. Wird aber " & "(" & l & ") mal verwendet."
     'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+End If
+reset_search
+End Sub
+
+
+Sub count_style_modulo()
+Dim l As Integer
+reset_search
+With ActiveDocument.Range.Find
+   .Style = NameOfFormat 'Replace with the name of the style you are counting
+   While .Execute
+      l = l + 1
+      If l > ActiveDocument.Range.Paragraphs.Count Then
+         Stop
+      End If
+   Wend
+End With
+
+Dim formatClosed As Integer
+Dim number1 As Integer
+Dim number2 As Integer
+
+number1 = l 'number of instances found
+number2 = 2 'integer multiple of 2 (opened + closed)
+
+formatClosed = number1 Mod number2
+
+If formatClosed = 0 Then
+    'MsgBox "Modulo = 0 – alle Kästen werden auch geschlossen."
+Else
+    WriteLogFile "Absatzformat " & NameOfFormat &  " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
 End If
 reset_search
 End Sub
