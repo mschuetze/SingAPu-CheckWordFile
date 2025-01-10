@@ -120,7 +120,7 @@ IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOf
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER PREVIOUS PARAGRAPH IS FORMAT Y -----
 '----------------------------------------------------------
 NameOfFormat = "SuS_Bilddateiname"
-NameOfFormatBefore = "SuS_Mengentext"
+multiStyles = "SuS_Mengentext,SuS_Kastentext"
 IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
@@ -334,27 +334,36 @@ Public Function FindParagraphBefore(ByVal SearchRange As Word.Range, ByVal ParaS
 
     Dim ParaIndex As Long
     Dim ParaBefore As Integer
-    For ParaIndex = 1 To SearchRange.Paragraphs.Count
+    FindParagraphBefore = ParaIndex
 
+    For ParaIndex = 1 To SearchRange.Paragraphs.Count
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
-            'MsgBox "Absatzformat " & NameOfFormat & " gefunden in Zeile( " & ParaIndex & ")"
-            FindParagraphBefore = ParaIndex
             'jump 1 paragraph back and check if it has certain format
             ParaBefore = ParaIndex - 1
-            If ActiveDocument.Paragraphs(ParaBefore).Range.Style = NameOfFormatBefore Then
-                'MsgBox "Alles OK in Zeile " & ParaIndex
-            Else
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz vor Absatzformat " & ParaStyle & " muss stets Absatzformat " & NameOfFormatAfter & " sein."
-                'MsgBox "Fehler in Zeile " & ParaIndex & vbCrLf & "Absatz vor Absatzformat " & ParaStyle & " muss stets Absatzformat " & NameOfFormatAfter & " sein."
+            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+            correctFormat = False
+            aStyleList = Split(multiStyles, ",")
+            ' MsgBox "multiStyles: " & multiStyles
+            For counter = LBound(aStyleList) To UBound(aStyleList)
+                ' MsgBox "counter: " & counter
+                NameOfFormatBefore = aStyleList(counter)
+                ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
+                If ActiveDocument.Paragraphs(ParaBefore).Range.Style = NameOfFormatBefore Then
+                    ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
+                    correctFormat = True
+                Else
+                ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                End If
+                ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
+            Next
+            ' check if variable is FALSE and if so, write to logfile
+            If correctFormat = False Then
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
             End If
-            
-        Else
-            'MsgBox "Absatzformat " & NameOfFormat & " wurde nicht gefunden."
-
+            ' MsgBox "correctFormat: " & correctFormat
         End If
-
     Next
-
 End Function
 
 
@@ -364,14 +373,13 @@ Public Function FindParagraphAfter(ByVal SearchRange As Word.Range, ByVal ParaSt
     Dim ParaIndex As Long
     Dim ParaAfter As Integer
     FindParagraphAfter = ParaIndex
-    'jump 1 paragraph ahaed and check if it has certain format
     ' ParaAfter = ParaIndex + 1
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+            'jump 1 paragraph ahaed and check if it has certain format
             ParaAfter = ParaIndex + 1
             ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
             char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
-            ' char = ActiveDocument.Paragraphs(ParaIndex).Range(Start:=0, End:=20)
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
