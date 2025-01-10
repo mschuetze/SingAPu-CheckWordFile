@@ -7,3 +7,5 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check whether exactly 1 paragraph has the paragraph format **SuS_Headline** - if not, output error.
 - Check whether third paragraph has format **SuS_Subhead1** - if not, convert automatically.
 - Check whether exactly 1 paragraph has the paragraph format **SuS_Subhead1** - if not, output error.
+- Check whether 0 OR 1 paragraph has the paragraph format **SuS_Subhead2** - if not, output error.
+- Check whether exactly 1 paragraph has the paragraph format **SuS_Autorname** - if not, output error.
