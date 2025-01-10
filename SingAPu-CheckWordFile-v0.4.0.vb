@@ -5,10 +5,15 @@ Option Explicit
 Public NameOfFormat As String
 Public NameOfFormatAfter As String
 Public NameOfFormatBefore As String
+Dim multiStyles As String, i As Integer
+Dim aStyleList As Variant
+Dim counter As Long, s As String
+Dim correctFormat As Boolean
 Dim logFile As Object
 Dim logFilePath As String
 Dim logFileName As String
 Dim NameContainsSpecialChars As Boolean
+Dim char As String
 
 
 Sub check_word_file()
@@ -16,7 +21,7 @@ Sub check_word_file()
 '----------------------------------------------------------
 '----- CHECK FILE NAME -----
 '----------------------------------------------------------
-MsgBox "Launching CHECK FILE NAME"
+' MsgBox "Launching CHECK FILE NAME"
 
 Dim fileName As String
 fileName = ActiveDocument.Name
@@ -28,32 +33,34 @@ If NameContainsSpecialChars = True Then
     Exit Sub
 End If
 
-MsgBox "CHECK FILE NAME done"
+' MsgBox "CHECK FILE NAME done"
 
 
 '----------------------------------------------------------
 '----- DELETE LOG FILE, IF EXISTS -----
 '----------------------------------------------------------
-MsgBox "Launching DELETE LOG FILE"
+' MsgBox "Launching DELETE LOG FILE"
 
 ' Set name of log file
 logFileName = "log" & ".txt"
  
 ' Set the path for the log file
 logFilePath = ActiveDocument.Path & "/" & logFileName
+' MsgBox "logFilePath: " & logFilePath
 
 If Dir(logFilePath) <> "" Then
-    'MsgBox "Log-Datei besteht bereits. Wird gelöscht."
+    ' MsgBox "Log-Datei besteht bereits. Wird gelöscht."
     Kill logFilePath
 End If
 
-MsgBox "DELETE LOG FILE done"
+' MsgBox "DELETE LOG FILE done"
 
 
 '----------------------------------------------------------
 '----- SET HEADER FORMATS -----
 '----------------------------------------------------------
-MsgBox "Launching SET HEADER FORMATS"
+
+' MsgBox "Launching SET HEADER FORMATS"
 ' SET FORMAT OF FIRST PARAGRAPH
 ActiveDocument.Paragraphs.First.Range.Select
 search_firstPara
@@ -65,7 +72,7 @@ ActiveDocument.Paragraphs(2).Style = "SuS_Headline"
 ' SET FORMAT OF THIRD PARAGRAPH
 ActiveDocument.Paragraphs(3).Style = "SuS_Subhead1"
 
-MsgBox "SET HEADER FORMATS done"
+' MsgBox "SET HEADER FORMATS done"
 
 '----------------------------------------------------------
 '----- CHECK NUMBER OF FORMAT INSTANCES  -----
@@ -95,15 +102,17 @@ count_style_lessthantwo
 Dim IsFound As Boolean
 
 NameOfFormat = "SuS_Subhead2"
-NameOfFormatAfter = "SuS_Autorname"
+' NameOfFormatAfter = "SuS_Autorname"
+multiStyles = "SuS_Autorname"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
-NameOfFormatAfter = "SuS_Bild/Tabellenunterschrift"
+multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
-NameOfFormatAfter = "SuS_Mengentext"
+' NameOfFormatAfter = "SuS_Mengentext"
+multiStyles = "SuS_Mengentext"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
@@ -292,6 +301,7 @@ End Sub
 
 'This can be used to determine if the first paragraph really is the one with the pipe "|" in it
 Sub search_firstPara()
+    ' MsgBox "Launching search_firstPara()"
     Dim textToFind As String
     textToFind = " | "
     With Selection.Find
@@ -310,7 +320,7 @@ Sub search_firstPara()
         ' plus some more if needed
         Selection.Find.Execute
         If .Found = True Then
-            Paragraphs.First.Style = "SuS_Mengentext"
+            ActiveDocument.Paragraphs.First.Style = "SuS_Mengentext"
         Else
             WriteLogFile "Fehler in Zeile 1: " & " Absatz muss eine Pipe ('|') enthalten."
         End If
@@ -350,27 +360,43 @@ End Function
 
 
 Public Function FindParagraphAfter(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
-
+    ' MsgBox "Function FindParagraphAfter() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
     Dim ParaIndex As Long
     Dim ParaAfter As Integer
+    FindParagraphAfter = ParaIndex
+    'jump 1 paragraph ahaed and check if it has certain format
+    ' ParaAfter = ParaIndex + 1
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
-
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
-
-            FindParagraphAfter = ParaIndex
-            'jump 1 paragraph ahaed and check if it has certain format
             ParaAfter = ParaIndex + 1
-            If ActiveDocument.Paragraphs(ParaAfter).Range.Style = NameOfFormatAfter Then
-                'MsgBox "Passt"
-            Else
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " muss stets Absatzformat " & NameOfFormatAfter & " folgen."
-                'MsgBox "Fehler in Zeile " & ParaIndex & vbCrLf & "Auf Absatzformat " & ParaStyle & " muss stets Absatzformat " & NameOfFormatAfter & " folgen."
+            ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
+            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            ' char = ActiveDocument.Paragraphs(ParaIndex).Range(Start:=0, End:=20)
+            ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+            correctFormat = False
+            ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
+            ' Test array
+            aStyleList = Split(multiStyles, ",")
+            ' MsgBox "multiStyles: " & multiStyles
+            For counter = LBound(aStyleList) To UBound(aStyleList)
+                ' MsgBox "counter: " & counter
+                NameOfFormatAfter = aStyleList(counter)
+                ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
+                If ActiveDocument.Paragraphs(ParaAfter).Range.Style = NameOfFormatAfter Then
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
+                    correctFormat = True
+                Else
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                End If
+            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+            Next
+            ' check if variable is FALSE and if so, write to logfile
+            If correctFormat = False Then
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
             End If
-
+            ' MsgBox "correctFormat: " & correctFormat
         End If
-
     Next
-
 End Function
 
 
