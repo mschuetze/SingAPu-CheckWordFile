@@ -17,3 +17,8 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check whether paragraphs with format **SuS_Bilddateiname** are always preceded by either a paragraph with the format **SuS_Mengentext** or **SuS_Kastentext**.
 
 The script collects all errors in a log file. 
+
+## How to install
+1. Download the latest version of the code from github.
+2. Open Microsoft Word
+3. Go to FILE > OPTIONS > CUSTOMIZE RIBBON > under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
