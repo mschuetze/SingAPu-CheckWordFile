@@ -24,12 +24,14 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 The script collects all errors in a log file. 
 
 ## How to install
-1. Download the latest version of the code from github.
-2. Open the file in a code editor application (i.e. Visual Studio Code).
-3. Open Microsoft Word.
-4. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
-5. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
-6. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
-7. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
-8. Copy the code from step #2 and paste it here.
-9. Click FILE > SAVE NORMAL 
+1. Go to the github repository.
+2. Click on the .vb file
+3. Click button RAW (upper right side, on top of the code)
+4. Copy entire code
+5. Open Microsoft Word.
+6. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
+7. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
+8. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
+9. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
+10. Copy the code from step #2 and paste it here.
+11. Click FILE > SAVE NORMAL 
