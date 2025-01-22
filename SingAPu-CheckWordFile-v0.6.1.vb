@@ -1,4 +1,4 @@
-' version 0.6.0
+' version 0.6.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -466,7 +466,7 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
                 ' MsgBox "counter: " & counter
                 NameOfFormatAfter = aStyleList(counter)
                 ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
-                If ActiveDocument.Paragraphs(ParaAfter).Range.Style != NameOfFormatAfter Then
+                If ActiveDocument.Paragraphs(ParaAfter).Range.Style <> NameOfFormatAfter Then
                     ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
                     correctFormat = True
                 Else
