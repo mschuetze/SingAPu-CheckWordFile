@@ -1,4 +1,4 @@
-' version 0.6.1
+' version 0.6.4
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -7,7 +7,7 @@ Option Explicit
 Public NameOfFormat As String
 Public NameOfFormatAfter As String
 Public NameOfFormatBefore As String
-Dim multiStyles As String, i As Integer
+Dim multiStyles As String, I As Integer
 Dim aStyleList As Variant
 Dim counter As Long, s As String
 Dim correctFormat As Boolean
@@ -120,8 +120,8 @@ NameOfFormat = "SuS_Subhead2"
 multiStyles = "SuS_Autorname"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
-NameOfFormat = "SuS_Kastenheadline"
-multiStyles = "SuS_Kastenheadline"
+NameOfFormat = "SuS_Bild/Tabellenunterschrift"
+multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
@@ -132,8 +132,8 @@ IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), 
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER NEXT PARAGRAPH IS NOT FORMAT Y -----
 '----------------------------------------------------------
 
-NameOfFormat = "SuS_Bild/Tabellenunterschrift"
-multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline"
+NameOfFormat = "SuS_Kastenheadline"
+multiStyles = "SuS_Kastenheadline"
 IsFound = FindParagraphAfterMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
@@ -146,11 +146,15 @@ IsFound = FindParagraphAfterMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory
 
 NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Mengentext,SuS_Kastentext"
-IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphBeforeMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+'----------------------------------------------------------
+'----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER PREVIOUS PARAGRAPH IS NOT FORMAT Y -----
+'----------------------------------------------------------
 
 NameOfFormat = "SuS_Kastenheadline"
 multiStyles = "SuS_Kastenheadline"
-IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphBeforeMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
 
@@ -364,11 +368,11 @@ End Sub
 
 
 
-Public Function FindParagraphBefore(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
+Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
     Dim ParaIndex As Long
     Dim ParaBefore As Integer
-    FindParagraphBefore = ParaIndex
+    FindParagraphBeforeMustBe = ParaIndex
 
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
@@ -384,6 +388,46 @@ Public Function FindParagraphBefore(ByVal SearchRange As Word.Range, ByVal ParaS
                 NameOfFormatBefore = aStyleList(counter)
                 ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
                 If ActiveDocument.Paragraphs(ParaBefore).Range.Style = NameOfFormatBefore Then
+                    ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
+                    correctFormat = True
+                Else
+                ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                End If
+                ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
+            Next
+            ' check if variable is FALSE and if so, write to logfile
+            If correctFormat = False Then
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
+            End If
+            ' MsgBox "correctFormat: " & correctFormat
+        End If
+    Next
+End Function
+
+
+
+
+
+Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
+
+    Dim ParaIndex As Long
+    Dim ParaBefore As Integer
+    FindParagraphBeforeMustNotBe = ParaIndex
+
+    For ParaIndex = 1 To SearchRange.Paragraphs.Count
+        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+            'jump 1 paragraph back and check if it has certain format
+            ParaBefore = ParaIndex - 1
+            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+            correctFormat = False
+            aStyleList = Split(multiStyles, ",")
+            ' MsgBox "multiStyles: " & multiStyles
+            For counter = LBound(aStyleList) To UBound(aStyleList)
+                ' MsgBox "counter: " & counter
+                NameOfFormatBefore = aStyleList(counter)
+                ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
+                If ActiveDocument.Paragraphs(ParaBefore).Range.Style <> NameOfFormatBefore Then
                     ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
                     correctFormat = True
                 Else
@@ -467,10 +511,10 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
                 NameOfFormatAfter = aStyleList(counter)
                 ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
                 If ActiveDocument.Paragraphs(ParaAfter).Range.Style <> NameOfFormatAfter Then
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise keines der ausgeschlossenen Formate " & NameOfFormatAfter
                     correctFormat = True
                 Else
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt fälschlicherweise eines der ausgeschlossenen Formate " & NameOfFormatAfter
                 End If
             ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
