@@ -14,9 +14,9 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check if paragraphs with format **SuS_Subhead2** are always followed by a paragraph with format **SuS_Autorname**.
 - Check if paragraphs with format **SuS_Bilddateiname** are always followed by either a paragraph with format **SuS_Bild/Tabellenunterschrift** or **SuS_Autor_Kurzbiografie**.
 - Check if the number of paragraphs with paragraph format **SuS_Kastenheadline** is an integer multiple of 2 (each box is opened + closed). If this is not the case, output an error.
-- Check whether paragraphs with format **SuS_Bilddateiname** are always preceded by either a paragraph with the format **SuS_Mengentext** or **SuS_Kastentext**.
-- Check if paragraph BEFORE + AFTER a paragraph with format **SuS_Kastenheadline** are NOT using **SuS_Kastenheadline** as well.
-- Check if paragraphs with format **SuS_Bild/Tabellenunterschrift** are always followed by one of those formats
+- Check whether paragraphs with format **SuS_Bilddateiname** are always preceded by either a paragraph with the format **SuS_Mengentext** or **SuS_Kastentext** – if not output error.
+- Check if paragraph BEFORE + AFTER a paragraph with format **SuS_Kastenheadline** are NOT using **SuS_Kastenheadline** as well – if not output error.
+- Check if paragraphs with format **SuS_Bild/Tabellenunterschrift** are always followed by one of those formats – if not output error:
   - SuS_Mengentext
   - SuS_Kastentext
   - SuS_Absatzheadline
