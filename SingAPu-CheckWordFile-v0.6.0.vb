@@ -126,9 +126,13 @@ NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
+'----------------------------------------------------------
+'----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER NEXT PARAGRAPH IS NOT FORMAT Y -----
+'----------------------------------------------------------
+
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
 multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline"
-IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphAfterMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
 
