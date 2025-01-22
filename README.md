@@ -3,6 +3,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 
 ## What it checks
 - Validates the .docx filename. If special characters are included, the script stops and throws an error.
+    - German Umlaute not yet included
 - Check whether the first paragraph contains a pipe (‘’|”"). If not, an error is output. If it does, the system checks whether the first paragraph has the paragraph format **SuS_Mengentext** - if not, convert automatically.
 - Check whether second paragraph has paragraph format **SuS_Headline** - if not, convert automatically.
 - Check whether exactly 1 paragraph has the paragraph format **SuS_Headline** - if not, output error.
@@ -16,3 +17,14 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check whether paragraphs with format **SuS_Bilddateiname** are always preceded by either a paragraph with the format **SuS_Mengentext** or **SuS_Kastentext**.
 
 The script collects all errors in a log file. 
+
+## How to install
+1. Download the latest version of the code from github.
+2. Open the file in a code editor application (i.e. Visual Studio Code).
+3. Open Microsoft Word.
+4. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
+5. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
+6. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
+7. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
+8. Copy the code from step #2 and paste it here.
+9. Click FILE > SAVE NORMAL 
