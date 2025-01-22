@@ -18,6 +18,10 @@ Dim char As String
 
 Sub check_word_file()
 
+
+
+
+
 '----------------------------------------------------------
 '----- CHECK FILE NAME -----
 '----------------------------------------------------------
@@ -34,6 +38,9 @@ If NameContainsSpecialChars = True Then
 End If
 
 ' MsgBox "CHECK FILE NAME done"
+
+
+
 
 
 '----------------------------------------------------------
@@ -54,6 +61,9 @@ If Dir(logFilePath) <> "" Then
 End If
 
 ' MsgBox "DELETE LOG FILE done"
+
+
+
 
 
 '----------------------------------------------------------
@@ -95,6 +105,9 @@ NameOfFormat = "SuS_Subhead2"
 count_style_lessthantwo
 
 
+
+
+
 '----------------------------------------------------------
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER NEXT PARAGRAPH IS FORMAT Y -----
 '----------------------------------------------------------
@@ -102,8 +115,11 @@ count_style_lessthantwo
 Dim IsFound As Boolean
 
 NameOfFormat = "SuS_Subhead2"
-' NameOfFormatAfter = "SuS_Autorname"
 multiStyles = "SuS_Autorname"
+IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+NameOfFormat = "SuS_Kastenheadline"
+multiStyles = "SuS_Kastenheadline"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
@@ -111,17 +127,27 @@ multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
-' NameOfFormatAfter = "SuS_Mengentext"
-multiStyles = "SuS_Mengentext"
+multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline"
 IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+
+
 
 
 '----------------------------------------------------------
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER PREVIOUS PARAGRAPH IS FORMAT Y -----
 '----------------------------------------------------------
+
 NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Mengentext,SuS_Kastentext"
 IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+NameOfFormat = "SuS_Kastenheadline"
+multiStyles = "SuS_Kastenheadline"
+IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+
+
 
 
 '----------------------------------------------------------
@@ -137,6 +163,8 @@ IsFound = FindParagraphBefore(ActiveDocument.StoryRanges(wdMainTextStory), NameO
 ' CHECK FOR SuS_Kastenheadline
 NameOfFormat = "SuS_Kastenheadline"
 count_style_modulo
+
+
 
 
 
