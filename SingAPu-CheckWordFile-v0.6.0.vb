@@ -116,19 +116,19 @@ Dim IsFound As Boolean
 
 NameOfFormat = "SuS_Subhead2"
 multiStyles = "SuS_Autorname"
-IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Kastenheadline"
 multiStyles = "SuS_Kastenheadline"
-IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
-IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
 multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline"
-IsFound = FindParagraphAfter(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 
 
@@ -396,11 +396,11 @@ End Function
 
 
 
-Public Function FindParagraphAfter(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
-    ' MsgBox "Function FindParagraphAfter() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
+Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
+    ' MsgBox "Function FindParagraphAfterMustBe() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
     Dim ParaIndex As Long
     Dim ParaAfter As Integer
-    FindParagraphAfter = ParaIndex
+    FindParagraphAfterMustBe = ParaIndex
     ' ParaAfter = ParaIndex + 1
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
@@ -434,6 +434,49 @@ Public Function FindParagraphAfter(ByVal SearchRange As Word.Range, ByVal ParaSt
         End If
     Next
 End Function
+
+
+
+
+Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
+    ' MsgBox "Function FindParagraphAfterMustNotBe() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
+    Dim ParaIndex As Long
+    Dim ParaAfter As Integer
+    FindParagraphAfterMustNotBe = ParaIndex
+    ' ParaAfter = ParaIndex + 1
+    For ParaIndex = 1 To SearchRange.Paragraphs.Count
+        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+            'jump 1 paragraph ahaed and check if it has certain format
+            ParaAfter = ParaIndex + 1
+            ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
+            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+            correctFormat = False
+            ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
+            ' Test array
+            aStyleList = Split(multiStyles, ",")
+            ' MsgBox "multiStyles: " & multiStyles
+            For counter = LBound(aStyleList) To UBound(aStyleList)
+                ' MsgBox "counter: " & counter
+                NameOfFormatAfter = aStyleList(counter)
+                ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
+                If ActiveDocument.Paragraphs(ParaAfter).Range.Style != NameOfFormatAfter Then
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
+                    correctFormat = True
+                Else
+                    ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                End If
+            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+            Next
+            ' check if variable is FALSE and if so, write to logfile
+            If correctFormat = False Then
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
+            End If
+            ' MsgBox "correctFormat: " & correctFormat
+        End If
+    Next
+End Function
+
 
 
 
