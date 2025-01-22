@@ -27,6 +27,9 @@ The script collects all errors in a log file.
 1. Go to the github repository.
 2. Click on the .vb file
 3. Click button RAW (upper right side, on top of the code)
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image1.jpg?raw=true)
+
+
 4. Copy entire code
 5. Open Microsoft Word.
 6. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
