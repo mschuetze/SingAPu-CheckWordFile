@@ -1,4 +1,4 @@
-' version 0.6.4
+' version 0.6.5
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -437,7 +437,7 @@ Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, By
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " darf nie ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -520,7 +520,7 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
+                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " darf keines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
