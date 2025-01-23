@@ -32,7 +32,10 @@ The script collects all errors in a log file.
 5. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
 6. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
 ![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image02.png)
-7. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
-8. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
-9. Paste the code from step #3.
-10. Click FILE > SAVE NORMAL  
+7. Go to the new DEVELOPER tab.
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image03.png)
+8. And hit the VISUAL BASIC button (far left).
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image03.png)
+9. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
+10. Paste the code from step #3.
+11. Click FILE > SAVE NORMAL  
