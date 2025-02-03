@@ -20,6 +20,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
   - SuS_Mengentext
   - SuS_Kastentext
   - SuS_Absatzheadline
+  - SuS_Unterabsatzheadline
 
 The script collects all errors in a log file. 
 
