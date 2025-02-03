@@ -18,7 +18,7 @@ Dim NameContainsSpecialChars As Boolean
 Dim char As String
 
 
-Sub check_word_file()
+Sub SingAPu_CheckWordFile()
 
 
 
