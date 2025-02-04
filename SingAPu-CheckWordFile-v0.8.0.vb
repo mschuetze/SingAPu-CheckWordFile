@@ -1,4 +1,4 @@
-' version 0.7.0
+' version 0.8.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -129,6 +129,10 @@ multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Links_und_Literatur_Text"
+multiStyles = "SuS_Links_und_Literatur_Text"
+IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+NameOfFormat = "SuS_Links_und_Literatur_Headline"
 multiStyles = "SuS_Links_und_Literatur_Text"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
