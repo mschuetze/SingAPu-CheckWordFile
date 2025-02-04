@@ -106,6 +106,10 @@ count_style_onlyone
 NameOfFormat = "SuS_Subhead2"
 count_style_lessthantwo
 
+' CHECK FOR SuS_Autorname
+NameOfFormat = "SuS_Links_und_Literatur_Headline"
+count_style_lessthantwo
+
 
 
 
