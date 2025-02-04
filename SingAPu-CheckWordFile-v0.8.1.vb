@@ -1,4 +1,4 @@
-' version 0.8.0
+' version 0.8.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -27,19 +27,67 @@ Sub SingAPu_CheckWordFile()
 '----------------------------------------------------------
 '----- CHECK FILE NAME -----
 '----------------------------------------------------------
-' MsgBox "Launching CHECK FILE NAME"
 
-Dim fileName As String
-fileName = ActiveDocument.Name
-NameContainsSpecialChars = False
-'MsgBox fileName
-BadChar (fileName)
-If NameContainsSpecialChars = True Then
-    MsgBox "Dateiname enthält Sonderzeichen."
-    Exit Sub
-End If
+    ' MsgBox "Launching CHECK FILE NAME"
+    Dim fileName As String
+    Dim baseFileName As String
+    Dim invalidChars As String
+    Dim i As Integer
+    Dim currentChar As String
+    Dim umlautChars As String
+    Dim emptySpaceChar As String
+    Dim foundInvalid As Boolean
+    Dim invalidList As String
+    
+    fileName = ActiveDocument.Name
+    ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
+    baseFileName = Left(fileName, InStrRev(fileName, ".") - 1)
 
-' MsgBox "CHECK FILE NAME done"
+    invalidChars = "!@#$%^&*()+={}[]|\:;""'<>,.?/~`" ' Hier definierst du die Sonderzeichen, die du überprüfen möchtest.
+    umlautChars = "äöüÄÖÜß" ' Umlaute und Sonderzeichen, die überprüft werden sollen.
+    emptySpaceChar = " " ' Leerzeichen wird separat aufgeführt, um eine aussagekräftige Fehlermeldung zu generieren
+    
+    foundInvalid = False
+    invalidList = "" ' Leere Liste für ungültige Zeichen
+    
+    ' Überprüfen des Dateinamens auf unerlaubte Sonderzeichen
+    For i = 1 To Len(baseFileName)
+        currentChar = Mid(baseFileName, i, 1)
+        
+        ' Überprüfen auf Sonderzeichen
+        If InStr(invalidChars, currentChar) > 0 Then
+            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+            End If
+            foundInvalid = True
+        End If
+
+        ' Überprüfen auf Umlaute
+        If InStr(umlautChars, currentChar) > 0 Then
+            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+            End If
+            foundInvalid = True
+        End If
+
+        ' Überprüfen auf Leerzeichen
+        If InStr(emptySpaceChar, currentChar) > 0 Then
+            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
+                invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
+            End If
+            foundInvalid = True
+        End If
+    Next i
+    
+    ' Falls keine ungültigen Zeichen gefunden wurden
+    If foundInvalid Then
+        MsgBox "Die folgenden Sonderzeichen wurden im Dateinamen gefunden und müssen zunächst ersetzt werden: " & vbCrLf & invalidList, vbExclamation
+        Exit Sub
+    End If
+    ' MsgBox "CHECK FILE NAME done"
 
 
 
@@ -199,50 +247,6 @@ MsgBox "Ich habe fertig."
 End Sub
 
 
-
-'----------------------------------------------------------
-'----- CHECK FILE NAME -----
-'----------------------------------------------------------
- 
-Function BadChar(strText As String) As Long
-     '
-     '****************************************************************************************
-     '       Title       BadChar
-     '       Target Application:  any
-     '       Function    test for the presence of charcters that can not be used in
-     '                   the name of an xlsheet, file, directory, etc
-     '
-     '           if no bad characters are found, BadChar = 0 on return
-     '           if any bad character is found, BadChar = i where i is the index (in strText)
-     '               where bad char was found
-     '       Limitations:    passed string variable should not include any path seperator
-     '                           characters
-     '                       stops and exits when 1st bad char is found so # of bad chars
-     '                           is not really known
-     '       Passed Values:
-     '           strText     [in, string]  text string to be examined
-     '
-     '****************************************************************************************
-     '
-     '
-    Dim BadChars    As String
-    Dim I           As Long
-    Dim J           As Long
-     
-    ' Use Unicode for German Umlaute: https://stackoverflow.com/questions/22017723/regex-for-umlaut '
-    BadChars = "ß:\/? *[](){}"
-    'BadChars = ":\/?*[]"
-    For I = 1 To Len(BadChars)
-        J = InStr(strText, Mid(BadChars, I, 1))
-        If J > 0 Then
-            BadChar = J
-            NameContainsSpecialChars = True
-            Exit Function
-        End If
-    Next I
-    BadChar = 0
-     
-End Function
 
 
 
