@@ -1,4 +1,4 @@
-' version 0.8.1
+' version 0.9.0j
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -11,11 +11,13 @@ Dim multiStyles As String, I As Integer
 Dim aStyleList As Variant
 Dim counter As Long, s As String
 Dim correctFormat As Boolean
-Dim logFile As Object
-Dim logFilePath As String
+' Dim logFile As Object
+' Dim logFilePath As String
 Dim logFileName As String
 Dim NameContainsSpecialChars As Boolean
 Dim char As String
+Dim logFilePath As String
+Dim logFile As Integer
 
 
 Sub SingAPu_CheckWordFile()
@@ -117,13 +119,49 @@ End If
 
 
 '----------------------------------------------------------
+'----- CHECK IF FIRST PARAGRAPH HAS A PIPE IN IT, IF SO CHECK IF PARAGRAPH IS FORMAT X, IF NOT SET THE CORRECT FORMAT -----
+'----------------------------------------------------------
+
+Dim firstParagraph As Paragraph
+Dim appliedStyle As String
+Dim paraText As String
+
+' Den ersten Absatz abrufen
+Set firstParagraph = ActiveDocument.Paragraphs(1)
+
+' Den Inhalt des ersten Absatzes abrufen
+paraText = firstParagraph.Range.Text
+
+' Prüfen, ob der Text das Zeichen "|" enthält
+If InStr(paraText, "|") > 0 Then
+    ' Den Namen der angewendeten Formatvorlage abrufen
+    appliedStyle = firstParagraph.Style
+    ' Prüfen, ob das Absatzformat "SuS_Mengentext" angewendet wurde
+    If appliedStyle <> "SuS_Mengentext" Then
+        ' MsgBox "Der erste Absatz enthält zwar das Zeichen '|', hat aber nicht das Format 'SuS_Mengentext'.", vbExclamation
+        ' Absatzformat zuweisen
+        firstParagraph.Style = "SuS_Mengentext"
+    End If
+Else
+    ' MsgBox "Der erste Absatz enthält das Zeichen '|' NICHT.", vbExclamation
+    logFile = FreeFile
+    Open logFilePath For Append As logFile
+    Print #logFile, Now & vbCrLf & "Der erste Absatz enthält das Zeichen '|' NICHT. Datum: " & vbCrLf & "----" & vbCrLf
+    Close logFile
+End If
+
+
+
+
+
+'----------------------------------------------------------
 '----- SET HEADER FORMATS -----
 '----------------------------------------------------------
 
 ' MsgBox "Launching SET HEADER FORMATS"
 ' SET FORMAT OF FIRST PARAGRAPH
-ActiveDocument.Paragraphs.First.Range.Select
-search_firstPara
+' ActiveDocument.Paragraphs.First.Range.Select
+' search_firstPara
 'Format will be set in Sub if check is TRUE
 
 ' SET FORMAT OF SECOND PARAGRAPH
@@ -133,6 +171,10 @@ ActiveDocument.Paragraphs(2).Style = "SuS_Headline"
 ActiveDocument.Paragraphs(3).Style = "SuS_Subhead1"
 
 ' MsgBox "SET HEADER FORMATS done"
+
+
+
+
 
 '----------------------------------------------------------
 '----- CHECK NUMBER OF FORMAT INSTANCES  -----
@@ -188,6 +230,10 @@ NameOfFormat = "SuS_Links_und_Literatur_Headline"
 multiStyles = "SuS_Links_und_Literatur_Text"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
+
+
+
+
 '----------------------------------------------------------
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER NEXT PARAGRAPH IS NOT FORMAT Y -----
 '----------------------------------------------------------
@@ -208,6 +254,10 @@ NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Mengentext,SuS_Kastentext"
 IsFound = FindParagraphBeforeMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
+
+
+
+
 '----------------------------------------------------------
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER PREVIOUS PARAGRAPH IS NOT FORMAT Y -----
 '----------------------------------------------------------
@@ -215,6 +265,43 @@ IsFound = FindParagraphBeforeMustBe(ActiveDocument.StoryRanges(wdMainTextStory),
 NameOfFormat = "SuS_Kastenheadline"
 multiStyles = "SuS_Kastenheadline"
 IsFound = FindParagraphBeforeMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+
+
+
+
+
+'----------------------------------------------------------
+'----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER IT CONTAINS SPECIAL CHARACTERS -----
+'----------------------------------------------------------
+
+Dim para As Paragraph
+Dim regex As Object
+Dim specialCharPattern As String
+Dim foundSpecialChar As Boolean
+
+' Pattern für Sonderzeichen: alles außer Buchstaben, Zahlen und Unterstrich
+specialCharPattern = "[^a-z0-9_]"
+
+' Erstellen des regulären Ausdrucks-Objekts
+Set regex = CreateObject("VBScript.RegExp")
+regex.IgnoreCase = False  ' Groß-/Kleinschreibung beachten (da nur Kleinbuchstaben erlaubt)
+regex.Global = True
+regex.Pattern = specialCharPattern
+
+' Durchlaufen aller Absätze im Dokument
+For Each para In ActiveDocument.Paragraphs
+    paraText = para.Range.Text
+
+    ' Überprüfen, ob der Absatz das Format "SuS_Bilddateiname" enthält
+    If InStr(paraText, "SuS_Bilddateiname") = 1 Then
+        ' Überprüfen, ob unerlaubte Zeichen vorhanden sind
+        If regex.Test(paraText) Then
+            foundSpecialChar = True
+            MsgBox "Fehler: Sonderzeichen im Absatz gefunden: " & vbCrLf & paraText, vbCritical
+            Exit Sub
+        End If
+    End If
+Next para
 
 
 
@@ -348,38 +435,6 @@ With Selection.Find
 End With
 End Sub
 
-
-'----------------------------------------------------------
-'----- SUB FOR SEARCHING THE FIRST PARAGRAPH -----
-'----------------------------------------------------------
-
-'This can be used to determine if the first paragraph really is the one with the pipe "|" in it
-Sub search_firstPara()
-    ' MsgBox "Launching search_firstPara()"
-    Dim textToFind As String
-    textToFind = " | "
-    With Selection.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = textToFind
-        .Replacement.Text = ""
-        .Forward = True
-        .Wrap = wdFindContinue
-        .Format = False
-        .MatchCase = False
-        .MatchWholeWord = False
-        .MatchWildcards = False
-        .MatchSoundsLike = False
-        .MatchAllWordForms = False
-        ' plus some more if needed
-        Selection.Find.Execute
-        If .Found = True Then
-            ActiveDocument.Paragraphs.First.Style = "SuS_Mengentext"
-        Else
-            WriteLogFile "Fehler in Zeile 1: " & " Absatz muss eine Pipe ('|') enthalten."
-        End If
-    End With
-End Sub
 
 
 
