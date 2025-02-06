@@ -1,4 +1,4 @@
-' version 0.9.0j
+' version 0.9.0n
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -146,7 +146,7 @@ Else
     ' MsgBox "Der erste Absatz enthält das Zeichen '|' NICHT.", vbExclamation
     logFile = FreeFile
     Open logFilePath For Append As logFile
-    Print #logFile, Now & vbCrLf & "Der erste Absatz enthält das Zeichen '|' NICHT. Datum: " & vbCrLf & "----" & vbCrLf
+    Print #logFile, Now & vbCrLf & "Im ersten Absatz fehlt das Zeichen '|' (Pipe)." & vbCrLf & "----" & vbCrLf
     Close logFile
 End If
 
@@ -222,11 +222,11 @@ NameOfFormat = "SuS_Bilddateiname"
 multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
-NameOfFormat = "SuS_Links_und_Literatur_Text"
+NameOfFormat = "SuS_Links_und_Literatur_Headline"
 multiStyles = "SuS_Links_und_Literatur_Text"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
-NameOfFormat = "SuS_Links_und_Literatur_Headline"
+NameOfFormat = "SuS_Links_und_Literatur_Text"
 multiStyles = "SuS_Links_und_Literatur_Text"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
@@ -338,6 +338,7 @@ End Sub
 
 
 Sub count_style_onlyone()
+MsgBox "Sub count_style_onlyone() gestartet für Absatzformat: " & NameOfFormat
 Dim l As Integer
 reset_search
 With ActiveDocument.Range.Find
@@ -360,6 +361,7 @@ End Sub
 
 
 Sub count_style_lessthantwo()
+MsgBox "Sub count_style_lessthantwo() gestartet für Absatzformat: " & NameOfFormat
 Dim l As Integer
 reset_search
 With ActiveDocument.Range.Find
@@ -382,6 +384,7 @@ End Sub
 
 
 Sub count_style_modulo()
+MsgBox "Sub count_style_modulo() gestartet für Absatzformat: " & NameOfFormat
 Dim l As Integer
 reset_search
 With ActiveDocument.Range.Find
@@ -441,8 +444,10 @@ End Sub
 
 Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
+    MsgBox "Funktion 'FindParagraphBeforeMustBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+
     Dim ParaIndex As Long
-    Dim ParaBefore As Integer
+    Dim ParaBefore As Long
     FindParagraphBeforeMustBe = ParaIndex
 
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
@@ -481,8 +486,10 @@ End Function
 
 Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
+    MsgBox "Funktion 'FindParagraphBeforeMustNotBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+
     Dim ParaIndex As Long
-    Dim ParaBefore As Integer
+    Dim ParaBefore As Long
     FindParagraphBeforeMustNotBe = ParaIndex
 
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
@@ -518,34 +525,36 @@ End Function
 
 
 Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
-    ' MsgBox "Function FindParagraphAfterMustBe() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
+
+    MsgBox "Funktion 'FindParagraphAfterMustBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+
     Dim ParaIndex As Long
-    Dim ParaAfter As Integer
+    Dim ParaAfter As Long
     FindParagraphAfterMustBe = ParaIndex
     ' ParaAfter = ParaIndex + 1
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
         If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
-            'jump 1 paragraph ahaed and check if it has certain format
+            'jump 1 paragraph ahead and check if it has certain format
             ParaAfter = ParaIndex + 1
-            ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
+            MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
             char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
             ' Test array
             aStyleList = Split(multiStyles, ",")
-            ' MsgBox "multiStyles: " & multiStyles
+            MsgBox "multiStyles: " & multiStyles
             For counter = LBound(aStyleList) To UBound(aStyleList)
                 ' MsgBox "counter: " & counter
                 NameOfFormatAfter = aStyleList(counter)
-                ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
+                MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
                 If ActiveDocument.Paragraphs(ParaAfter).Range.Style = NameOfFormatAfter Then
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
+                    MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
                     correctFormat = True
                 Else
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                    MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
                 End If
-            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+            MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
@@ -560,9 +569,11 @@ End Function
 
 
 Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
-    ' MsgBox "Function FindParagraphAfterMustNotBe() wird gestartet mit Format " & NameOfFormat & " (" & ParaStyle & ")."
+
+    MsgBox "Funktion 'FindParagraphAfterMustNotBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+
     Dim ParaIndex As Long
-    Dim ParaAfter As Integer
+    Dim ParaAfter As Long
     FindParagraphAfterMustNotBe = ParaIndex
     ' ParaAfter = ParaIndex + 1
     For ParaIndex = 1 To SearchRange.Paragraphs.Count
