@@ -274,35 +274,70 @@ IsFound = FindParagraphBeforeMustNotBe(ActiveDocument.StoryRanges(wdMainTextStor
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER IT CONTAINS SPECIAL CHARACTERS -----
 '----------------------------------------------------------
 
-Dim para As Paragraph
-Dim regex As Object
-Dim specialCharPattern As String
-Dim foundSpecialChar As Boolean
+' MsgBox "Start: 'find special chars in image reference'"
 
-' Pattern für Sonderzeichen: alles außer Buchstaben, Zahlen und Unterstrich
-specialCharPattern = "[^a-z0-9_]"
+Dim Absatz As Paragraph
+Dim Formatvorlage As String
+Dim AbsatzText As String
+Dim baseAbsatzText As String
+Dim j As Integer
 
-' Erstellen des regulären Ausdrucks-Objekts
-Set regex = CreateObject("VBScript.RegExp")
-regex.IgnoreCase = False  ' Groß-/Kleinschreibung beachten (da nur Kleinbuchstaben erlaubt)
-regex.Global = True
-regex.Pattern = specialCharPattern
 
-' Durchlaufen aller Absätze im Dokument
-For Each para In ActiveDocument.Paragraphs
-    paraText = para.Range.Text
+' Die Formatvorlage, die du suchen möchtest
+Formatvorlage = "SuS_Bilddateiname"
 
-    ' Überprüfen, ob der Absatz das Format "SuS_Bilddateiname" enthält
-    If InStr(paraText, "SuS_Bilddateiname") = 1 Then
-        ' Überprüfen, ob unerlaubte Zeichen vorhanden sind
-        If regex.Test(paraText) Then
-            foundSpecialChar = True
-            MsgBox "Fehler: Sonderzeichen im Absatz gefunden: " & vbCrLf & paraText, vbCritical
-            Exit Sub
+
+' Gehe alle Absätze im Dokument durch
+For Each Absatz In ActiveDocument.Paragraphs
+    ' Wenn der Absatz die angegebene Formatvorlage hat
+    If Absatz.Style = Formatvorlage Then
+        foundInvalid = False
+        invalidList = "" ' Leere Liste für ungültige Zeichen
+        ' Hole den Text des Absatzes
+        AbsatzText = Absatz.Range.Text
+        ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
+        baseAbsatzText = Left(AbsatzText, InStrRev(AbsatzText, ".") - 1)
+
+        ' Überprüfe jeden Charakter im Absatz auf Sonderzeichen
+        For j = 1 To Len(baseAbsatzText)
+            currentChar = Mid(baseAbsatzText, j, 1)
+
+            ' Überprüfen auf Sonderzeichen
+            If InStr(invalidChars, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                    invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+                End If
+                foundInvalid = True
+            End If
+
+            ' Überprüfen auf Umlaute
+            If InStr(umlautChars, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                    invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+                End If
+                foundInvalid = True
+            End If
+
+            ' Überprüfen auf Leerzeichen
+            If InStr(emptySpaceChar, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
+                    invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
+                End If
+                foundInvalid = True
+            End If
+
+        Next j
+
+        ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
+        If foundInvalid Then
+            WriteLogFile "Bildverweis " & AbsatzText & "enthält folgende Sonderzeichen: " & invalidList
         End If
-    End If
-Next para
 
+    End If
+Next Absatz
 
 
 
@@ -338,80 +373,84 @@ End Sub
 
 
 Sub count_style_onlyone()
-' MsgBox "Sub count_style_onlyone() gestartet für Absatzformat: " & NameOfFormat
-Dim l As Integer
-reset_search
-With ActiveDocument.Range.Find
-   .Style = NameOfFormat 'Replace with the name of the style you are counting
-   While .Execute
-      l = l + 1
-      If l > ActiveDocument.Range.Paragraphs.Count Then
-         Stop
-      End If
-   Wend
-End With
-If l = 1 Then
-    'MsgBox NameOfFormat & " passt"
-Else
-    WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
-    'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
-End If
-reset_search
+    ' MsgBox "Start: Sub count_style_onlyone() für Absatzformat: " & NameOfFormat
+    Dim l As Integer
+    reset_search
+    With ActiveDocument.Range.Find
+    .Style = NameOfFormat 'Replace with the name of the style you are counting
+    While .Execute
+        l = l + 1
+        If l > ActiveDocument.Range.Paragraphs.Count Then
+            Stop
+        End If
+    Wend
+    End With
+    If l = 1 Then
+        'MsgBox NameOfFormat & " passt"
+    Else
+        WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+        'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+    End If
+    reset_search
+    ' MsgBox "Ende: Sub count_style_onlyone() für Absatzformat: " & NameOfFormat
 End Sub
 
 
 Sub count_style_lessthantwo()
-' MsgBox "Sub count_style_lessthantwo() gestartet für Absatzformat: " & NameOfFormat
-Dim l As Integer
-reset_search
-With ActiveDocument.Range.Find
-   .Style = NameOfFormat 'Replace with the name of the style you are counting
-   While .Execute
-      l = l + 1
-      If l > ActiveDocument.Range.Paragraphs.Count Then
-         Stop
-      End If
-   Wend
-End With
-If l < 2 Then
-    'MsgBox NameOfFormat & " passt"
-Else
-    WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal (oder gar nicht) vorkommen. Wird aber " & "(" & l & ") mal verwendet."
-    'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
-End If
-reset_search
+    ' MsgBox "Start: Sub count_style_lessthantwo() für Absatzformat: " & NameOfFormat
+    Dim l As Integer
+    reset_search
+    With ActiveDocument.Range.Find
+    .Style = NameOfFormat 'Replace with the name of the style you are counting
+    While .Execute
+        l = l + 1
+        If l > ActiveDocument.Range.Paragraphs.Count Then
+            Stop
+        End If
+    Wend
+    End With
+    If l < 2 Then
+        'MsgBox NameOfFormat & " passt"
+    Else
+        WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal (oder gar nicht) vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+        'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+    End If
+    reset_search
+    ' MsgBox "Ende: Sub count_style_lessthantwo() für Absatzformat: " & NameOfFormat
 End Sub
 
 
 Sub count_style_modulo()
-' MsgBox "Sub count_style_modulo() gestartet für Absatzformat: " & NameOfFormat
-Dim l As Integer
-reset_search
-With ActiveDocument.Range.Find
-   .Style = NameOfFormat 'Replace with the name of the style you are counting
-   While .Execute
-      l = l + 1
-      If l > ActiveDocument.Range.Paragraphs.Count Then
-         Stop
-      End If
-   Wend
-End With
+    ' MsgBox "Start: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
+    Dim l As Integer
+    reset_search
+    With ActiveDocument.Range.Find
+    .Style = NameOfFormat 'Replace with the name of the style you are counting
+    While .Execute
+        l = l + 1
+        If l > ActiveDocument.Range.Paragraphs.Count Then
+            Stop
+        End If
+    Wend
+    ' MsgBox "Ende: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
+    End With
 
-Dim formatClosed As Integer
-Dim number1 As Integer
-Dim number2 As Integer
+    Dim formatClosed As Integer
+    Dim number1 As Integer
+    Dim number2 As Integer
 
-number1 = l 'number of instances found
-number2 = 2 'integer multiple of 2 (opened + closed)
+    number1 = l 'number of instances found
+    number2 = 2 'integer multiple of 2 (opened + closed)
 
-formatClosed = number1 Mod number2
+    formatClosed = number1 Mod number2
 
-If formatClosed = 0 Then
-    'MsgBox "Modulo = 0 – alle Kästen werden auch geschlossen."
-Else
-    WriteLogFile "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
-End If
-reset_search
+    If formatClosed = 0 Then
+        'MsgBox "Modulo = 0 – alle Kästen werden auch geschlossen."
+    Else
+        WriteLogFile "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
+    End If
+    reset_search
+    ' MsgBox "Ende: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
 End Sub
 
 
@@ -444,7 +483,7 @@ End Sub
 
 Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
-    ' MsgBox "Funktion 'FindParagraphBeforeMustBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+    ' MsgBox "Start: 'FindParagraphBeforeMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
     Dim ParaIndex As Long
     Dim ParaBefore As Long
@@ -478,6 +517,7 @@ Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal
             ' MsgBox "correctFormat: " & correctFormat
         End If
     Next
+    ' MsgBox "Ende: 'FindParagraphBeforeMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 End Function
 
 
@@ -486,7 +526,7 @@ End Function
 
 Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
-    ' MsgBox "Funktion 'FindParagraphBeforeMustNotBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+    ' MsgBox "Start: 'FindParagraphBeforeMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
     Dim ParaIndex As Long
     Dim ParaBefore As Long
@@ -520,13 +560,14 @@ Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, By
             ' MsgBox "correctFormat: " & correctFormat
         End If
     Next
+    ' MsgBox "Ende: 'FindParagraphBeforeMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 End Function
 
 
 
 Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
-    MsgBox "Funktion 'FindParagraphAfterMustBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+    ' MsgBox "Start: 'FindParagraphAfterMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
     Dim ParaIndex As Long
     Dim ParaAfter As Long
@@ -554,7 +595,7 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
                 Else
                     ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
                 End If
-            MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
@@ -563,6 +604,7 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
             ' MsgBox "correctFormat: " & correctFormat
         End If
     Next
+    ' MsgBox "Ende: 'FindParagraphAfterMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 End Function
 
 
@@ -570,7 +612,7 @@ End Function
 
 Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
-    MsgBox "Funktion 'FindParagraphAfterMustNotBe' gestartet für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+    ' MsgBox "Start: 'FindParagraphAfterMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
     Dim ParaIndex As Long
     Dim ParaAfter As Long
@@ -598,7 +640,7 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
                 Else
                     ' MsgBox "Auf Format " & NameOfFormat & " folgt fälschlicherweise eines der ausgeschlossenen Formate " & NameOfFormatAfter
                 End If
-            MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
@@ -607,6 +649,7 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
             ' MsgBox "correctFormat: " & correctFormat
         End If
     Next
+    ' MsgBox "Ende: 'FindParagraphAfterMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 End Function
 
 
