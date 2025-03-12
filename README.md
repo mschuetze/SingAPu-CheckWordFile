@@ -50,6 +50,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
   - SuS_Kastentext
   - SuS_Absatzheadline
   - SuS_Unter_Absatzheadline
+  - Sus_Kasten_Absatzheadline
 - Check if content of paragraphs with format **SuS_Bilddateiname** contains special characters (see filename validation) – if it does, output error.
 
 The script collects all errors in a log file. 
