@@ -56,16 +56,30 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 The script collects all errors in a log file. 
 
 ## How to install
-1. Go to the github repository.
-2. Click on the .vb file
-3. Click button COPY RAW (see screenshot)
-![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image01.png)
-4. Open Microsoft Word.
-5. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
-6. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
+### Activate Developer options in MS Word
+This only needs to be done once.
+1. Open Microsoft Word.
+2. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
+3. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
 ![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image02.png)
-7. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
+### Install / update the script 
+1. Go to the github repository.
+2. Click on the .vb file.
+3. Click button COPY RAW (see screenshot).
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image01.png)
+4. Go to the new DEVELOPER tab and hit the VISUAL BASIC button (far left).
 ![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image03.png)
-8. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
-9. Paste the code from step #3.
-10. Click FILE > SAVE NORMAL  
+5. In the PROJECT panel (top left-hand side) expand the entry NORMAL > MICROSOFT WORD OBJECTS > double-click THISDOCUMENT.
+6. Paste the code from step #3.
+7. Click FILE > SAVE NORMAL.
+8. Close the Developer view.
+### Create shortcut for script 
+1. Open Microsoft Word.
+2. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
+3. Switch to QUICK ACCESS TOOLBAR (see screenshot – step 1).
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image04.png)
+4. In the dropdown menu choose MAKROS (see screenshot – step 2).
+5. Select the script based on it´s name (see screenshot – step 3).
+6. Click the right-arrow button to add it to the quick access toolbar (see screenshot – step 4).
+The shortcut has been created and can be used (see screenshot).
+![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image05.png)
