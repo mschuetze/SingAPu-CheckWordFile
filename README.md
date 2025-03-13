@@ -81,5 +81,6 @@ This only needs to be done once.
 4. In the dropdown menu choose MAKROS (see screenshot – step 2).
 5. Select the script based on it´s name (see screenshot – step 3).
 6. Click the right-arrow button to add it to the quick access toolbar (see screenshot – step 4).
+
 The shortcut has been created and can be used (see screenshot).
 ![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image05.png)
