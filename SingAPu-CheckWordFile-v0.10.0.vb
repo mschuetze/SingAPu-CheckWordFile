@@ -1,4 +1,4 @@
-' version 0.9.0p
+' version 0.10.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -11,8 +11,6 @@ Dim multiStyles As String, I As Integer
 Dim aStyleList As Variant
 Dim counter As Long, s As String
 Dim correctFormat As Boolean
-' Dim logFile As Object
-' Dim logFilePath As String
 Dim logFileName As String
 Dim NameContainsSpecialChars As Boolean
 Dim char As String
@@ -30,7 +28,7 @@ Sub SingAPu_CheckWordFile()
 '----- CHECK FILE NAME -----
 '----------------------------------------------------------
 
-    ' MsgBox "Launching CHECK FILE NAME"
+    ' MsgBox "Launching: CHECK FILE NAME"
     Dim fileName As String
     Dim baseFileName As String
     Dim invalidChars As String
@@ -44,6 +42,7 @@ Sub SingAPu_CheckWordFile()
     fileName = ActiveDocument.Name
     ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
     baseFileName = Left(fileName, InStrRev(fileName, ".") - 1)
+    ' MsgBox "baseFileName: " & baseFileName
 
     invalidChars = "!@#$%^&*()+={}[]|\:;""'<>,.?/~`" ' Hier definierst du die Sonderzeichen, die du überprüfen möchtest.
     umlautChars = "äöüÄÖÜß" ' Umlaute und Sonderzeichen, die überprüft werden sollen.
@@ -55,11 +54,13 @@ Sub SingAPu_CheckWordFile()
     ' Überprüfen des Dateinamens auf unerlaubte Sonderzeichen
     For i = 1 To Len(baseFileName)
         currentChar = Mid(baseFileName, i, 1)
+        ' MsgBox "currentChar: " & currentChar
         
         ' Überprüfen auf Sonderzeichen
         If InStr(invalidChars, currentChar) > 0 Then
+            MsgBox "Der Dateiname (" & baseFileName & ") enthält ein Sonderzeichen"
             If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
                 invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
             End If
             foundInvalid = True
@@ -67,8 +68,9 @@ Sub SingAPu_CheckWordFile()
 
         ' Überprüfen auf Umlaute
         If InStr(umlautChars, currentChar) > 0 Then
+            MsgBox "Der Dateiname (" & baseFileName & ") enthält einen Umlaut"
             If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
                 invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
             End If
             foundInvalid = True
@@ -76,6 +78,7 @@ Sub SingAPu_CheckWordFile()
 
         ' Überprüfen auf Leerzeichen
         If InStr(emptySpaceChar, currentChar) > 0 Then
+            MsgBox "Der Dateiname (" & baseFileName & ") enthält ein Leerzeichen"
             If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
                 ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
                 invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
@@ -89,7 +92,7 @@ Sub SingAPu_CheckWordFile()
         MsgBox "Die folgenden Sonderzeichen wurden im Dateinamen gefunden und müssen zunächst ersetzt werden: " & vbCrLf & invalidList, vbExclamation
         Exit Sub
     End If
-    ' MsgBox "CHECK FILE NAME done"
+    ' MsgBox "Done: CHECK FILE NAME"
 
 
 
@@ -98,7 +101,7 @@ Sub SingAPu_CheckWordFile()
 '----------------------------------------------------------
 '----- DELETE LOG FILE, IF EXISTS -----
 '----------------------------------------------------------
-' MsgBox "Launching DELETE LOG FILE"
+' MsgBox "Launching: DELETE LOG FILE"
 
 ' Set name of log file
 logFileName = "log" & ".txt"
@@ -112,7 +115,7 @@ If Dir(logFilePath) <> "" Then
     Kill logFilePath
 End If
 
-' MsgBox "DELETE LOG FILE done"
+' MsgBox "Done: DELETE LOG FILE"
 
 
 
@@ -121,6 +124,8 @@ End If
 '----------------------------------------------------------
 '----- CHECK IF FIRST PARAGRAPH HAS A PIPE IN IT, IF SO CHECK IF PARAGRAPH IS FORMAT X, IF NOT SET THE CORRECT FORMAT -----
 '----------------------------------------------------------
+
+' MsgBox "Launching: CHECK FOR PIPE"
 
 Dim firstParagraph As Paragraph
 Dim appliedStyle As String
@@ -150,6 +155,8 @@ Else
     Close logFile
 End If
 
+' MsgBox "Done: CHECK FOR PIPE"
+
 
 
 
@@ -158,7 +165,8 @@ End If
 '----- SET HEADER FORMATS -----
 '----------------------------------------------------------
 
-' MsgBox "Launching SET HEADER FORMATS"
+' MsgBox "Launching: SET HEADER FORMATS"
+
 ' SET FORMAT OF FIRST PARAGRAPH
 ' ActiveDocument.Paragraphs.First.Range.Select
 ' search_firstPara
@@ -170,7 +178,7 @@ ActiveDocument.Paragraphs(2).Style = "SuS_Headline"
 ' SET FORMAT OF THIRD PARAGRAPH
 ActiveDocument.Paragraphs(3).Style = "SuS_Subhead1"
 
-' MsgBox "SET HEADER FORMATS done"
+' MsgBox "Done: SET HEADER FORMATS"
 
 
 
@@ -215,7 +223,7 @@ multiStyles = "SuS_Autorname"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
-multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline,SuS_Unter_Absatzheadline"
+multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline,SuS_Unter_Absatzheadline,Sus_Kasten_Absatzheadline"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
@@ -281,10 +289,17 @@ Dim Formatvorlage As String
 Dim AbsatzText As String
 Dim baseAbsatzText As String
 Dim j As Integer
-
+Dim dotPos As Integer
+Dim fileExtension As String
+Dim valid As Boolean
+Dim Dateiendung As Variant
+Dim EndungGefunden As Boolean
 
 ' Die Formatvorlage, die du suchen möchtest
 Formatvorlage = "SuS_Bilddateiname"
+
+' Definiere die gängigen Bild-Dateiendungen
+Dateiendung = Array(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tif", ".tiff", ".webp", ".svg")
 
 
 ' Gehe alle Absätze im Dokument durch
@@ -292,52 +307,69 @@ For Each Absatz In ActiveDocument.Paragraphs
     ' Wenn der Absatz die angegebene Formatvorlage hat
     If Absatz.Style = Formatvorlage Then
         foundInvalid = False
+        EndungGefunden = False ' Standardmäßig auf ungültig setzen
         invalidList = "" ' Leere Liste für ungültige Zeichen
         ' Hole den Text des Absatzes
         AbsatzText = Absatz.Range.Text
-        ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
-        baseAbsatzText = Left(AbsatzText, InStrRev(AbsatzText, ".") - 1)
-
-        ' Überprüfe jeden Charakter im Absatz auf Sonderzeichen
-        For j = 1 To Len(baseAbsatzText)
-            currentChar = Mid(baseAbsatzText, j, 1)
-
-            ' Überprüfen auf Sonderzeichen
-            If InStr(invalidChars, currentChar) > 0 Then
-                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                    invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
-                End If
-                foundInvalid = True
+        ' MsgBox "AbsatzText: " & AbsatzText
+        ' Schleife über alle gängigen Bilddateiendungen
+        For i = LBound(Dateiendung) To UBound(Dateiendung)
+            If InStr(1, AbsatzText, Dateiendung(i), vbTextCompare) > 0 Then
+                EndungGefunden = True
+                Exit For
             End If
+        Next i
 
-            ' Überprüfen auf Umlaute
-            If InStr(umlautChars, currentChar) > 0 Then
-                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                    invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+        If Not EndungGefunden Then
+            WriteLogFile "Dem Bildverweis '" & AbsatzText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
+        Else
+            ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
+            baseAbsatzText = Left(AbsatzText, InStrRev(AbsatzText, ".") - 1)
+            ' MsgBox "baseAbsatzText: " & baseAbsatzText
+
+            ' Überprüfe jeden Charakter im Absatz auf Sonderzeichen
+            For j = 1 To Len(baseAbsatzText)
+                currentChar = Mid(baseAbsatzText, j, 1)
+
+                ' Überprüfen auf Sonderzeichen
+                If InStr(invalidChars, currentChar) > 0 Then
+                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                        invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+                    End If
+                    foundInvalid = True
                 End If
-                foundInvalid = True
-            End If
 
-            ' Überprüfen auf Leerzeichen
-            If InStr(emptySpaceChar, currentChar) > 0 Then
-                If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                    ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
-                    invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
+                ' Überprüfen auf Umlaute
+                If InStr(umlautChars, currentChar) > 0 Then
+                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
+                        invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
+                    End If
+                    foundInvalid = True
                 End If
-                foundInvalid = True
+
+                ' Überprüfen auf Leerzeichen
+                If InStr(emptySpaceChar, currentChar) > 0 Then
+                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
+                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
+                        invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
+                    End If
+                    foundInvalid = True
+                End If
+
+            Next j
+
+            ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
+            If foundInvalid Then
+                WriteLogFile "Bildverweis " & AbsatzText & "enthält folgende Sonderzeichen: " & invalidList
             End If
-
-        Next j
-
-        ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
-        If foundInvalid Then
-            WriteLogFile "Bildverweis " & AbsatzText & "enthält folgende Sonderzeichen: " & invalidList
         End If
-
     End If
 Next Absatz
+
+' MsgBox "Ende: 'find special chars in image reference'"
+
 
 
 
@@ -354,7 +386,20 @@ Next Absatz
 
 ' CHECK FOR SuS_Kastenheadline
 NameOfFormat = "SuS_Kastenheadline"
-count_style_modulo
+count_style_modulo_even
+
+
+
+
+
+'----------------------------------------------------------
+'----- CHECK IF PREVIOUS PARAGRAPH OF ODD OCCURENCES OF FORMAT X IS FORMAT Y -----
+'----------------------------------------------------------
+
+' ' CHECK FOR SuS_Kastenheadline
+' NameOfFormat = "SuS_Kastenheadline"
+' multiStyles = "SuS_Mengentext"
+' check_style_before_odd
 
 
 
@@ -375,6 +420,7 @@ End Sub
 Sub count_style_onlyone()
     ' MsgBox "Start: Sub count_style_onlyone() für Absatzformat: " & NameOfFormat
     Dim l As Integer
+    l = 0
     reset_search
     With ActiveDocument.Range.Find
     .Style = NameOfFormat 'Replace with the name of the style you are counting
@@ -399,6 +445,7 @@ End Sub
 Sub count_style_lessthantwo()
     ' MsgBox "Start: Sub count_style_lessthantwo() für Absatzformat: " & NameOfFormat
     Dim l As Integer
+    l = 0
     reset_search
     With ActiveDocument.Range.Find
     .Style = NameOfFormat 'Replace with the name of the style you are counting
@@ -420,9 +467,10 @@ Sub count_style_lessthantwo()
 End Sub
 
 
-Sub count_style_modulo()
-    ' MsgBox "Start: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
+Sub count_style_modulo_even()
+    ' MsgBox "Start: Sub count_style_modulo_even() für Absatzformat: " & NameOfFormat
     Dim l As Integer
+    l = 0
     reset_search
     With ActiveDocument.Range.Find
     .Style = NameOfFormat 'Replace with the name of the style you are counting
@@ -432,7 +480,6 @@ Sub count_style_modulo()
             Stop
         End If
     Wend
-    ' MsgBox "Ende: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
     End With
 
     Dim formatClosed As Integer
@@ -445,12 +492,51 @@ Sub count_style_modulo()
     formatClosed = number1 Mod number2
 
     If formatClosed = 0 Then
-        'MsgBox "Modulo = 0 – alle Kästen werden auch geschlossen."
+        'MsgBox "Modulo = 0 –> alle Kästen werden auch geschlossen."
     Else
         WriteLogFile "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
     End If
     reset_search
-    ' MsgBox "Ende: Sub count_style_modulo() für Absatzformat: " & NameOfFormat
+    ' MsgBox "Ende: Sub count_style_modulo_even() für Absatzformat: " & NameOfFormat
+End Sub
+
+
+
+
+Sub check_style_before_odd()
+
+    Dim para As Paragraph
+    Dim previousPara As Paragraph
+    Dim count As Integer
+    Dim styleCount As Integer
+
+    ' count paragraphs with given style
+    count = 0
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
+            count = count + 1
+        End If
+    Next para
+
+    ' Loop through all odd occurences of style Y
+    styleCount = 0
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
+            styleCount = styleCount + 1
+            ' Überprüfe nur ungerade Vorkommen
+            If styleCount Mod 2 <> 0 Then
+                ' Wenn es ungerade ist, überprüfe den vorherigen Absatz
+                Set previousPara = para.Previous
+                If Not previousPara Is Nothing Then
+                    If previousPara.Style <> "SuS_Mengentext" Then
+                        MsgBox "Ungerades Vorkommen von 'SuS_Kastenheadline' ohne 'SuS_Mengentext' davor gefunden!" & vbCrLf & _
+                               "Absatz " & para.Range.Start & " enthält 'SuS_Kastenheadline', aber der vorherige Absatz enthält nicht 'SuS_Mengentext'."
+                    End If
+                End If
+            End If
+        End If
+    Next para
+
 End Sub
 
 
