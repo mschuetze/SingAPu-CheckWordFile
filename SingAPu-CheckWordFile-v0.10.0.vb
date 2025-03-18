@@ -1,4 +1,4 @@
-' version 0.10.0
+' version 0.10.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -223,7 +223,7 @@ multiStyles = "SuS_Autorname"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bild/Tabellenunterschrift"
-multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline,SuS_Unter_Absatzheadline,Sus_Kasten_Absatzheadline"
+multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline,SuS_Unter_Absatzheadline,SuS_Kasten_Absatzheadline"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
 NameOfFormat = "SuS_Bilddateiname"
