@@ -1,4 +1,4 @@
-' version 0.10.1
+' version 0.11.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -16,13 +16,13 @@ Dim NameContainsSpecialChars As Boolean
 Dim char As String
 Dim logFilePath As String
 Dim logFile As Integer
+Dim para As Paragraph
+
+
+
 
 
 Sub SingAPu_CheckWordFile()
-
-
-
-
 
 '----------------------------------------------------------
 '----- CHECK FILE NAME -----
@@ -396,10 +396,10 @@ count_style_modulo_even
 '----- CHECK IF PREVIOUS PARAGRAPH OF ODD OCCURENCES OF FORMAT X IS FORMAT Y -----
 '----------------------------------------------------------
 
-' ' CHECK FOR SuS_Kastenheadline
-' NameOfFormat = "SuS_Kastenheadline"
-' multiStyles = "SuS_Mengentext"
-' check_style_before_odd
+' CHECK FOR SuS_Kastenheadline
+NameOfFormat = "SuS_Kastenheadline"
+multiStyles = "SuS_Mengentext"
+check_style_before_odd
 
 
 
@@ -505,37 +505,36 @@ End Sub
 
 Sub check_style_before_odd()
 
-    Dim para As Paragraph
     Dim previousPara As Paragraph
     Dim count As Integer
     Dim styleCount As Integer
-
-    ' count paragraphs with given style
-    count = 0
-    For Each para In ActiveDocument.Paragraphs
-        If para.Style = NameOfFormat Then
-            count = count + 1
-        End If
-    Next para
+    Dim first40Chars As String
 
     ' Loop through all odd occurences of style Y
+    ' MsgBox "Start: check_style_before_odd()"
     styleCount = 0
     For Each para In ActiveDocument.Paragraphs
         If para.Style = NameOfFormat Then
+            ' MsgBox "Absatz mit Format " & NameOfFormat & " wurde gefunden."
             styleCount = styleCount + 1
             ' Überprüfe nur ungerade Vorkommen
             If styleCount Mod 2 <> 0 Then
                 ' Wenn es ungerade ist, überprüfe den vorherigen Absatz
+                ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " wurde gefunden."
                 Set previousPara = para.Previous
                 If Not previousPara Is Nothing Then
                     If previousPara.Style <> "SuS_Mengentext" Then
-                        MsgBox "Ungerades Vorkommen von 'SuS_Kastenheadline' ohne 'SuS_Mengentext' davor gefunden!" & vbCrLf & _
-                               "Absatz " & para.Range.Start & " enthält 'SuS_Kastenheadline', aber der vorherige Absatz enthält nicht 'SuS_Mengentext'."
+                        ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " gefunden, ohne 'SuS_Mengentext' davor!"
+                        ' Rufe die Funktion auf, um die ersten 40 Zeichen des Absatzes zu holen
+                        first40Chars = First40Characters(para)
+                        ' MsgBox first40Chars
+                        WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
                     End If
                 End If
             End If
         End If
     Next para
+    ' MsgBox "Done: check_style_before_odd()"
 
 End Sub
 
@@ -736,6 +735,27 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
         End If
     Next
     ' MsgBox "Ende: 'FindParagraphAfterMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
+End Function
+
+
+
+
+
+Function First40Characters(para As Paragraph) As String
+    ' MsgBox "Start: Funktion 'First40Characters'"
+    Dim paraText As String
+    Dim first40Chars As String
+    
+    ' Den Text des Absatzes holen
+    paraText = para.Range.Text
+    ' MsgBox "paraText: " & paraText
+    
+    ' Die ersten 40 Zeichen extrahieren
+    first40Chars = Left(paraText, 40)
+    ' MsgBox "first40Chars: " & first40Chars
+    
+    ' Gib die ersten 40 Zeichen zurück
+    First40Characters = first40Chars
 End Function
 
 
