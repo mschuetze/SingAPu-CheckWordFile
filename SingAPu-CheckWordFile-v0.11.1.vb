@@ -1,4 +1,4 @@
-' version 0.11.0
+' version 0.11.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -17,6 +17,11 @@ Dim char As String
 Dim logFilePath As String
 Dim logFile As Integer
 Dim para As Paragraph
+Dim paraText As String
+Dim first40Chars As String
+Dim previousPara As Paragraph
+Dim nextPara As Paragraph
+
 
 
 
@@ -129,7 +134,6 @@ End If
 
 Dim firstParagraph As Paragraph
 Dim appliedStyle As String
-Dim paraText As String
 
 ' Den ersten Absatz abrufen
 Set firstParagraph = ActiveDocument.Paragraphs(1)
@@ -505,10 +509,8 @@ End Sub
 
 Sub check_style_before_odd()
 
-    Dim previousPara As Paragraph
     Dim count As Integer
     Dim styleCount As Integer
-    Dim first40Chars As String
 
     ' Loop through all odd occurences of style Y
     ' MsgBox "Start: check_style_before_odd()"
@@ -570,15 +572,14 @@ Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal
 
     ' MsgBox "Start: 'FindParagraphBeforeMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
-    Dim ParaIndex As Long
-    Dim ParaBefore As Long
-    FindParagraphBeforeMustBe = ParaIndex
-
-    For ParaIndex = 1 To SearchRange.Paragraphs.Count
-        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
             'jump 1 paragraph back and check if it has certain format
-            ParaBefore = ParaIndex - 1
-            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            Set previousPara = para.Previous
+            ' Den Text des Absatzes holen
+            paraText = para.Range.Text
+            ' Die ersten 40 Zeichen extrahieren
+            first40Chars = Left(paraText, 40)
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             aStyleList = Split(multiStyles, ",")
@@ -587,17 +588,19 @@ Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal
                 ' MsgBox "counter: " & counter
                 NameOfFormatBefore = aStyleList(counter)
                 ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
-                If ActiveDocument.Paragraphs(ParaBefore).Range.Style = NameOfFormatBefore Then
-                    ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
-                    correctFormat = True
-                Else
-                ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                If Not previousPara Is Nothing Then
+                    If previousPara.Style = NameOfFormatBefore Then
+                        ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
+                        correctFormat = True
+                    Else
+                    ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                    End If
+                    ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
                 End If
-                ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
+                WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -612,16 +615,14 @@ End Function
 Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, ByVal ParaStyle As String) As Long
 
     ' MsgBox "Start: 'FindParagraphBeforeMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
-
-    Dim ParaIndex As Long
-    Dim ParaBefore As Long
-    FindParagraphBeforeMustNotBe = ParaIndex
-
-    For ParaIndex = 1 To SearchRange.Paragraphs.Count
-        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
+            ' Den Text des Absatzes holen
+            paraText = para.Range.Text
+            ' Die ersten 40 Zeichen extrahieren
+            first40Chars = Left(paraText, 40)
             'jump 1 paragraph back and check if it has certain format
-            ParaBefore = ParaIndex - 1
-            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
+            Set previousPara = para.Previous
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             aStyleList = Split(multiStyles, ",")
@@ -630,17 +631,19 @@ Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, By
                 ' MsgBox "counter: " & counter
                 NameOfFormatBefore = aStyleList(counter)
                 ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
-                If ActiveDocument.Paragraphs(ParaBefore).Range.Style <> NameOfFormatBefore Then
+                If Not previousPara Is Nothing Then
+                    If previousPara.Style = NameOfFormatBefore Then
                     ' MsgBox "Absatz mit Format " & NameOfFormat & " geht korrekterweise Absatz mit Format " & NameOfFormatBefore & " voran."
                     correctFormat = True
-                Else
-                ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                    Else
+                    ' MsgBox "Absatz mit Format " & NameOfFormat & " geht nicht Absatz mit Format " & NameOfFormatBefore & " voran."
+                    End If
+                    ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
                 End If
-                ' MsgBox "Durchlauf für " & NameOfFormatBefore & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
-            If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Absatz mit Format " & ParaStyle & " darf nie ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & char & "]"
+            If correctFormat = True Then
+                WriteLogFile "Absatz mit Format " & NameOfFormat & " darf nie ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -654,37 +657,37 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
 
     ' MsgBox "Start: 'FindParagraphAfterMustBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
-    Dim ParaIndex As Long
-    Dim ParaAfter As Long
-    FindParagraphAfterMustBe = ParaIndex
-    ' ParaAfter = ParaIndex + 1
-    For ParaIndex = 1 To SearchRange.Paragraphs.Count - 1
-        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
+            ' Den Text des Absatzes holen
+            paraText = para.Range.Text
+            ' Die ersten 40 Zeichen extrahieren
+            first40Chars = Left(paraText, 40)
             'jump 1 paragraph ahead and check if it has certain format
-            ParaAfter = ParaIndex + 1
+            Set nextPara = para.Next
             ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
-            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
-            ' Test array
             aStyleList = Split(multiStyles, ",")
             ' MsgBox "multiStyles: " & multiStyles
             For counter = LBound(aStyleList) To UBound(aStyleList)
                 ' MsgBox "counter: " & counter
                 NameOfFormatAfter = aStyleList(counter)
                 ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
-                If ActiveDocument.Paragraphs(ParaAfter).Range.Style = NameOfFormatAfter Then
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
-                    correctFormat = True
-                Else
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                If Not nextPara Is Nothing Then
+                    If nextPara.Style = NameOfFormatAfter Then
+                        ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise Format " & NameOfFormatAfter
+                        correctFormat = True
+                    Else
+                        ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
+                    End If
+                    ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
                 End If
-            ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
+                WriteLogFile "Auf Absatzformat " & NameOfFormat & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -699,16 +702,15 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
 
     ' MsgBox "Start: 'FindParagraphAfterMustNotBe' für Absatzformat: " & NameOfFormat & " (" & ParaStyle & ")"
 
-    Dim ParaIndex As Long
-    Dim ParaAfter As Long
-    FindParagraphAfterMustNotBe = ParaIndex
-    ' ParaAfter = ParaIndex + 1
-    For ParaIndex = 1 To SearchRange.Paragraphs.Count - 1
-        If ActiveDocument.Paragraphs(ParaIndex).Range.Style = ParaStyle Then
+    For Each para In ActiveDocument.Paragraphs
+        If para.Style = NameOfFormat Then
+            ' Den Text des Absatzes holen
+            paraText = para.Range.Text
+            ' Die ersten 40 Zeichen extrahieren
+            first40Chars = Left(paraText, 40)
             'jump 1 paragraph ahaed and check if it has certain format
-            ParaAfter = ParaIndex + 1
+            Set nextPara = para.Next
             ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
-            char = ActiveDocument.Paragraphs(ParaIndex).Range.Sentences(1).Text
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             ' MsgBox "Variable correctFormat wird zunächst auf FALSE gesetzt: " & correctFormat
@@ -719,17 +721,19 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
                 ' MsgBox "counter: " & counter
                 NameOfFormatAfter = aStyleList(counter)
                 ' MsgBox "NameOfFormatAfter: " & NameOfFormatAfter
-                If ActiveDocument.Paragraphs(ParaAfter).Range.Style <> NameOfFormatAfter Then
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise keines der ausgeschlossenen Formate " & NameOfFormatAfter
-                    correctFormat = True
-                Else
-                    ' MsgBox "Auf Format " & NameOfFormat & " folgt fälschlicherweise eines der ausgeschlossenen Formate " & NameOfFormatAfter
+                If Not nextPara Is Nothing Then
+                    If nextPara.Style = NameOfFormatAfter Then
+                        ' MsgBox "Auf Format " & NameOfFormat & " folgt korrekterweise keines der ausgeschlossenen Formate " & NameOfFormatAfter
+                        correctFormat = True
+                    Else
+                        ' MsgBox "Auf Format " & NameOfFormat & " folgt fälschlicherweise eines der ausgeschlossenen Formate " & NameOfFormatAfter
+                    End If
                 End If
             ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
             ' check if variable is FALSE and if so, write to logfile
-            If correctFormat = False Then
-                WriteLogFile "Fehler in Zeile " & ParaIndex & ": Auf Absatzformat " & ParaStyle & " darf keines dieser Absatzformate folgen: " & multiStyles & " [" & char & "]"
+            If correctFormat = True Then
+                WriteLogFile "Auf Absatzformat " & NameOfFormat & " darf keines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -743,8 +747,6 @@ End Function
 
 Function First40Characters(para As Paragraph) As String
     ' MsgBox "Start: Funktion 'First40Characters'"
-    Dim paraText As String
-    Dim first40Chars As String
     
     ' Den Text des Absatzes holen
     paraText = para.Range.Text
