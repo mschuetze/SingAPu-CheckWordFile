@@ -1,4 +1,4 @@
-' version 0.11.1
+' version 0.11.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -524,14 +524,28 @@ Sub check_style_before_odd()
                 ' Wenn es ungerade ist, überprüfe den vorherigen Absatz
                 ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " wurde gefunden."
                 Set previousPara = para.Previous
-                If Not previousPara Is Nothing Then
-                    If previousPara.Style <> "SuS_Mengentext" Then
-                        ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " gefunden, ohne 'SuS_Mengentext' davor!"
-                        ' Rufe die Funktion auf, um die ersten 40 Zeichen des Absatzes zu holen
-                        first40Chars = First40Characters(para)
-                        ' MsgBox first40Chars
-                        WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+                correctFormat = False
+                aStyleList = Split(multiStyles, ",")
+                ' MsgBox "multiStyles: " & multiStyles
+                For counter = LBound(aStyleList) To UBound(aStyleList)
+                    ' MsgBox "counter: " & counter
+                    NameOfFormatBefore = aStyleList(counter)
+                    ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
+                    If Not previousPara Is Nothing Then
+                        If previousPara.Style <> NameOfFormatBefore Then
+                            ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " gefunden, ohne 'SuS_Mengentext' davor!"
+                            ' Rufe die Funktion auf, um die ersten 40 Zeichen des Absatzes zu holen
+                            first40Chars = First40Characters(para)
+                            correctFormat = True
+                            ' MsgBox first40Chars
+                            WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                        End If
                     End If
+                Next
+                ' check if variable is FALSE and if so, write to logfile
+                If correctFormat = False Then
+                    WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
                 End If
             End If
         End If
