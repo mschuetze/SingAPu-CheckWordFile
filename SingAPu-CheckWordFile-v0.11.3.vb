@@ -1,4 +1,4 @@
-' version 0.11.2
+' version 0.11.3
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -509,22 +509,25 @@ End Sub
 
 Sub check_style_before_odd()
 
-    Dim count As Integer
     Dim styleCount As Integer
 
-    ' Loop through all odd occurences of style Y
     ' MsgBox "Start: check_style_before_odd()"
     styleCount = 0
     For Each para In ActiveDocument.Paragraphs
         If para.Style = NameOfFormat Then
             ' MsgBox "Absatz mit Format " & NameOfFormat & " wurde gefunden."
             styleCount = styleCount + 1
+            ' MsgBox "styleCount: " & styleCount
+            ' MsgBox "para.Range.Text: " & para.Range.Text
+
             ' Überprüfe nur ungerade Vorkommen
             If styleCount Mod 2 <> 0 Then
                 ' Wenn es ungerade ist, überprüfe den vorherigen Absatz
                 ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " wurde gefunden."
                 Set previousPara = para.Previous
+                ' MsgBox "previousPara.Range.Text: " & previousPara.Range.Text
                 ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
+                first40Chars = First40Characters(para)
                 correctFormat = False
                 aStyleList = Split(multiStyles, ",")
                 ' MsgBox "multiStyles: " & multiStyles
@@ -533,19 +536,17 @@ Sub check_style_before_odd()
                     NameOfFormatBefore = aStyleList(counter)
                     ' MsgBox "NameOfFormatBefore: " & NameOfFormatBefore
                     If Not previousPara Is Nothing Then
-                        If previousPara.Style <> NameOfFormatBefore Then
+                        If previousPara.Style = NameOfFormatBefore Then
                             ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " gefunden, ohne 'SuS_Mengentext' davor!"
                             ' Rufe die Funktion auf, um die ersten 40 Zeichen des Absatzes zu holen
-                            first40Chars = First40Characters(para)
                             correctFormat = True
-                            ' MsgBox first40Chars
-                            WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
                         End If
                     End If
                 Next
+                ' MsgBox "correctFormat: " & correctFormat & vbCrLf & "Wenn TRUE, enthält Dokument keinen Fehler."
                 ' check if variable is FALSE and if so, write to logfile
                 If correctFormat = False Then
-                    WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                    WriteLogFile "Ungeradzahligen Vorkommen von Absätzen mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
                 End If
             End If
         End If
@@ -697,8 +698,11 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
                         ' MsgBox "Auf Format " & NameOfFormat & " folgt nicht Format " & NameOfFormatAfter
                     End If
                     ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
+                Else
+                    correctFormat = True
                 End If
             Next
+            ' MsgBox "correctFormat: " & correctFormat & vbCrLf & "Wenn TRUE, enthält Dokument keinen Fehler."
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
                 WriteLogFile "Auf Absatzformat " & NameOfFormat & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
@@ -742,6 +746,8 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
                     Else
                         ' MsgBox "Auf Format " & NameOfFormat & " folgt fälschlicherweise eines der ausgeschlossenen Formate " & NameOfFormatAfter
                     End If
+                Else
+                    correctFormat = False
                 End If
             ' MsgBox "Durchlauf für " & NameOfFormatAfter & " beendet. correctFormat: " & correctFormat
             Next
@@ -769,6 +775,14 @@ Function First40Characters(para As Paragraph) As String
     ' Die ersten 40 Zeichen extrahieren
     first40Chars = Left(paraText, 40)
     ' MsgBox "first40Chars: " & first40Chars
+
+    ' Entferne führende Leerzeichen und Zeilenumbrüche
+    first40Chars = RTrim(first40Chars)
+
+    ' Entferne Zeilenumbrüche und Leerzeichen am Ende des Textes
+    Do While Right(first40Chars, 1) = Chr(13) Or Right(first40Chars, 1) = Chr(10)
+        first40Chars = Left(first40Chars, Len(first40Chars) - 1)
+    Loop
     
     ' Gib die ersten 40 Zeichen zurück
     First40Characters = first40Chars
