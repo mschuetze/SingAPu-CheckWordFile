@@ -1,4 +1,4 @@
-' version 0.11.3
+' version 0.12.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -21,7 +21,7 @@ Dim paraText As String
 Dim first40Chars As String
 Dim previousPara As Paragraph
 Dim nextPara As Paragraph
-
+Dim styleCount As Integer
 
 
 
@@ -290,7 +290,6 @@ IsFound = FindParagraphBeforeMustNotBe(ActiveDocument.StoryRanges(wdMainTextStor
 
 Dim Absatz As Paragraph
 Dim Formatvorlage As String
-Dim AbsatzText As String
 Dim baseAbsatzText As String
 Dim j As Integer
 Dim dotPos As Integer
@@ -314,21 +313,21 @@ For Each Absatz In ActiveDocument.Paragraphs
         EndungGefunden = False ' Standardmäßig auf ungültig setzen
         invalidList = "" ' Leere Liste für ungültige Zeichen
         ' Hole den Text des Absatzes
-        AbsatzText = Absatz.Range.Text
-        ' MsgBox "AbsatzText: " & AbsatzText
+        paraText = Absatz.Range.Text
+        ' MsgBox "paraText: " & paraText
         ' Schleife über alle gängigen Bilddateiendungen
         For i = LBound(Dateiendung) To UBound(Dateiendung)
-            If InStr(1, AbsatzText, Dateiendung(i), vbTextCompare) > 0 Then
+            If InStr(1, paraText, Dateiendung(i), vbTextCompare) > 0 Then
                 EndungGefunden = True
                 Exit For
             End If
         Next i
 
         If Not EndungGefunden Then
-            WriteLogFile "Dem Bildverweis '" & AbsatzText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
+            WriteLogFile "Dem Bildverweis '" & paraText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
         Else
             ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
-            baseAbsatzText = Left(AbsatzText, InStrRev(AbsatzText, ".") - 1)
+            baseAbsatzText = Left(paraText, InStrRev(paraText, ".") - 1)
             ' MsgBox "baseAbsatzText: " & baseAbsatzText
 
             ' Überprüfe jeden Charakter im Absatz auf Sonderzeichen
@@ -366,7 +365,7 @@ For Each Absatz In ActiveDocument.Paragraphs
 
             ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
             If foundInvalid Then
-                WriteLogFile "Bildverweis " & AbsatzText & "enthält folgende Sonderzeichen: " & invalidList
+                WriteLogFile "Bildverweis " & paraText & "enthält folgende Sonderzeichen: " & invalidList
             End If
         End If
     End If
@@ -405,6 +404,16 @@ NameOfFormat = "SuS_Kastenheadline"
 multiStyles = "SuS_Mengentext"
 check_style_before_odd
 
+
+
+
+
+'----------------------------------------------------------
+'----- CHECK IF ODD OCCURENCES OF FORMAT X IS NOT EMPTY ---
+'----------------------------------------------------------
+
+' CHECK FOR SuS_Kastenheadline
+check_odd_kastenheadline_empty
 
 
 
@@ -509,8 +518,6 @@ End Sub
 
 Sub check_style_before_odd()
 
-    Dim styleCount As Integer
-
     ' MsgBox "Start: check_style_before_odd()"
     styleCount = 0
     For Each para In ActiveDocument.Paragraphs
@@ -553,6 +560,49 @@ Sub check_style_before_odd()
     Next para
     ' MsgBox "Done: check_style_before_odd()"
 
+End Sub
+
+
+
+
+Sub check_odd_kastenheadline_empty()
+
+    ' Initialize the counter for the style
+    styleCount = 0
+
+    ' Loop through all paragraphs in the document
+    For Each para In ActiveDocument.Paragraphs
+        ' Check if the paragraph has the style "SuS_Kastenheadline"
+        If para.Style = "SuS_Kastenheadline" Then
+            ' Increment the counter for this style
+            styleCount = styleCount + 1
+
+            ' Check if it's an odd-numbered instance
+            If styleCount Mod 2 <> 0 Then
+                ' Get the text of the paragraph
+                paraText = para.Range.Text
+
+                ' Remove leading/trailing spaces and line breaks
+                paraText = Trim(paraText)
+                Do While Right(paraText, 1) = Chr(13) Or Right(paraText, 1) = Chr(10)
+                    paraText = Left(paraText, Len(paraText) - 1)
+                Loop
+
+                ' If the paragraph is empty, log a note
+                If paraText = "" Then
+                    ' Get the first 40 characters of the previous paragraph
+                    If Not para.Next Is Nothing Then
+                        first40Chars = First40Characters(para.Next)
+                    Else
+                        first40Chars = "No next paragraph"
+                    End If
+
+                    ' Write to the log file
+                    WriteLogFile "Ungerades Vorkommen von 'SuS_Kastenheadline' darf nicht leer sein: [" & first40Chars & "]."
+                End If
+            End If
+        End If
+    Next para
 End Sub
 
 
