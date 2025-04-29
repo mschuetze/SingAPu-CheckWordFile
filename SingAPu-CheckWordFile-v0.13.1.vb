@@ -1,4 +1,4 @@
-' version 0.12.2
+' version 0.13.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -412,9 +412,19 @@ check_style_before_odd
 '----- CHECK IF ODD OCCURENCES OF FORMAT X IS NOT EMPTY ---
 '----------------------------------------------------------
 
-' CHECK FOR SuS_Kastenheadline
 NameOfFormat = "SuS_Kastenheadline"
 check_odd_kastenheadline_empty
+
+
+
+
+
+'----------------------------------------------------------
+'----- CHECK IF ONLY STYLES WITH STRING 'SuS_' ARE BEING USED ---
+'----------------------------------------------------------
+
+check_invalid_styles
+
 
 
 
@@ -605,6 +615,51 @@ Sub check_odd_kastenheadline_empty()
         End If
     Next para
 End Sub
+
+
+
+
+
+Sub check_invalid_styles()
+    Dim charRange As Variant
+    Dim styleName As Variant
+    Dim invalidStyles As Collection
+    Dim style As Style
+    Dim wrtstring As String
+
+    ' Initialize a collection to store invalid styles
+    Set invalidStyles = New Collection
+
+    ' Check all paragraph styles in the document
+    For Each para In ActiveDocument.Paragraphs
+        styleName = para.Style.NameLocal
+        If Left(styleName, 4) <> "SuS_" Then
+            On Error Resume Next
+            invalidStyles.Add styleName, styleName ' Avoid duplicates
+            On Error GoTo 0
+        End If
+    Next para
+
+    ' Check all character styles in the document
+    For Each charRange In ActiveDocument.StoryRanges(wdMainTextStory).Characters
+        styleName = charRange.Style.NameLocal
+        If Left(styleName, 4) <> "SuS_" Then
+            On Error Resume Next
+            invalidStyles.Add styleName, styleName ' Avoid duplicates
+            On Error GoTo 0
+        End If
+    Next charRange
+
+    ' Log invalid styles to the log file
+    If invalidStyles.Count > 0 Then
+        For Each styleName In invalidStyles
+            wrtstring = "Ungültiges Absatz- oder Zeichenformat gefunden: " & styleName
+            WriteLogFile wrtstring
+        Next styleName
+    End If
+End Sub
+
+
 
 
 
