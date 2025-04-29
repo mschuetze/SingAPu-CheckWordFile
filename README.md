@@ -76,7 +76,8 @@ This only needs to be done once.
 6. Paste the code from step #3.
 7. Click FILE > SAVE NORMAL.
 8. Close the Developer view.
-### Create shortcut for script 
+### Create shortcut for script
+This only needs to be done once.
 1. Open Microsoft Word.
 2. Go to FILE > OPTIONS > CUSTOMIZE RIBBON.
 3. Switch to QUICK ACCESS TOOLBAR (see screenshot – step 1).
