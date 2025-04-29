@@ -1,4 +1,4 @@
-' version 0.12.1
+' version 0.12.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -413,6 +413,7 @@ check_style_before_odd
 '----------------------------------------------------------
 
 ' CHECK FOR SuS_Kastenheadline
+NameOfFormat = "SuS_Kastenheadline"
 check_odd_kastenheadline_empty
 
 
@@ -573,7 +574,7 @@ Sub check_odd_kastenheadline_empty()
     ' Loop through all paragraphs in the document
     For Each para In ActiveDocument.Paragraphs
         ' Check if the paragraph has the style "SuS_Kastenheadline"
-        If para.Style = "SuS_Kastenheadline" Then
+        If para.Style = NameOfFormat Then
             ' Increment the counter for this style
             styleCount = styleCount + 1
 
