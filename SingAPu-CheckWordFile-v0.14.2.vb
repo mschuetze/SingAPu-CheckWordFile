@@ -1,4 +1,4 @@
-' version 0.14.1
+' version 0.14.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -588,7 +588,9 @@ Sub check_style_before_odd()
             If styleCount Mod 2 <> 0 Then
                 ' Wenn es ungerade ist, überprüfe den vorherigen Absatz
                 ' MsgBox "Ungerades Vorkommen von " & NameOfFormat & " wurde gefunden."
-                Set previousPara = para.Previous
+                If Not para.Previous Is Nothing Then
+                    Set previousPara = para.Previous
+                End If
                 ' MsgBox "previousPara.Range.Text: " & previousPara.Range.Text
                 ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
                 first40Chars = First40Characters(para)
@@ -742,7 +744,9 @@ Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal
     For Each para In ActiveDocument.Paragraphs
         If para.Style = NameOfFormat Then
             'jump 1 paragraph back and check if it has certain format
-            Set previousPara = para.Previous
+            If Not para.Previous Is Nothing Then
+                Set previousPara = para.Previous
+            End If
             ' Den Text des Absatzes holen
             paraText = para.Range.Text
             ' Die ersten 40 Zeichen extrahieren
@@ -789,7 +793,9 @@ Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, By
             ' Die ersten 40 Zeichen extrahieren
             first40Chars = Left(paraText, 40)
             'jump 1 paragraph back and check if it has certain format
-            Set previousPara = para.Previous
+            If Not para.Previous Is Nothing Then
+                Set previousPara = para.Previous
+            End If
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
             aStyleList = Split(multiStyles, ",")
@@ -831,7 +837,9 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
             ' Die ersten 40 Zeichen extrahieren
             first40Chars = Left(paraText, 40)
             'jump 1 paragraph ahead and check if it has certain format
-            Set nextPara = para.Next
+            If Not para.Next Is Nothing Then
+                Set nextPara = para.Next
+            End If
             ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
@@ -879,7 +887,9 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
             ' Die ersten 40 Zeichen extrahieren
             first40Chars = Left(paraText, 40)
             'jump 1 paragraph ahaed and check if it has certain format
-            Set nextPara = para.Next
+            If Not para.Next Is Nothing Then
+                Set nextPara = para.Next
+            End If
             ' MsgBox "Format " & ParaStyle & " gefunden [" & ParaIndex & " + " & ParaAfter & "]."
             ' set Variable to FALSE – only gets TRUE if correct format is being used (see IF-statement)
             correctFormat = False
