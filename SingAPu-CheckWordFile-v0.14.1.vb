@@ -1,4 +1,4 @@
-' version 0.13.1
+' version 0.14.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -22,12 +22,48 @@ Dim first40Chars As String
 Dim previousPara As Paragraph
 Dim nextPara As Paragraph
 Dim styleCount As Integer
+Dim logEntries As Collection ' Declare a global collection for log entries
+
+
+
+
+
+Sub InitializeLog()
+    ' Initialize the log entries collection
+    Set logEntries = New Collection
+End Sub
+
+Sub AddLogEntry(entry As String)
+    ' Add a log entry to the collection
+    logEntries.Add Now & " : " & entry
+End Sub
+
+Sub WriteLogEntries()
+    Dim logFileNumber As Integer
+    Dim entry As Variant
+
+    ' Get a free file number
+    logFileNumber = FreeFile
+
+    ' Open the log file for appending
+    Open logFilePath For Append As #logFileNumber
+
+    ' Write each log entry to the file
+    For Each entry In logEntries
+        Print #logFileNumber, entry & vbCrLf & "----"
+    Next entry
+
+    ' Close the file
+    Close #logFileNumber
+End Sub
 
 
 
 
 
 Sub SingAPu_CheckWordFile()
+
+InitializeLog ' Initialize the logEntries collection
 
 '----------------------------------------------------------
 '----- CHECK FILE NAME -----
@@ -324,7 +360,7 @@ For Each Absatz In ActiveDocument.Paragraphs
         Next i
 
         If Not EndungGefunden Then
-            WriteLogFile "Dem Bildverweis '" & paraText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
+            AddLogEntry "Dem Bildverweis '" & paraText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
         Else
             ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
             baseAbsatzText = Left(paraText, InStrRev(paraText, ".") - 1)
@@ -365,7 +401,7 @@ For Each Absatz In ActiveDocument.Paragraphs
 
             ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
             If foundInvalid Then
-                WriteLogFile "Bildverweis " & paraText & "enthält folgende Sonderzeichen: " & invalidList
+                AddLogEntry "Bildverweis " & paraText & "enthält folgende Sonderzeichen: " & invalidList
             End If
         End If
     End If
@@ -430,6 +466,16 @@ check_invalid_styles
 
 
 '----------------------------------------------------------
+'----- WRITE ALL LOG ENTRIES TO THE FILE ------------------
+'----------------------------------------------------------
+
+    WriteLogEntries
+
+
+
+
+
+'----------------------------------------------------------
 '----- END OF SCRIPT MESSAGE -----
 '----------------------------------------------------------
 
@@ -458,7 +504,7 @@ Sub count_style_onlyone()
     If l = 1 Then
         'MsgBox NameOfFormat & " passt"
     Else
-        WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+        AddLogEntry "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
         'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
     End If
     reset_search
@@ -483,7 +529,7 @@ Sub count_style_lessthantwo()
     If l < 2 Then
         'MsgBox NameOfFormat & " passt"
     Else
-        WriteLogFile "Absatzformat " & NameOfFormat & " darf nur 1 mal (oder gar nicht) vorkommen. Wird aber " & "(" & l & ") mal verwendet."
+        AddLogEntry "Absatzformat " & NameOfFormat & " darf nur 1 mal (oder gar nicht) vorkommen. Wird aber " & "(" & l & ") mal verwendet."
         'MsgBox "Absatzformat " & NameOfFormat & " darf nur 1 mal vorkommen. Wird aber " & "(" & l & ") mal verwendet."
     End If
     reset_search
@@ -518,7 +564,7 @@ Sub count_style_modulo_even()
     If formatClosed = 0 Then
         'MsgBox "Modulo = 0 –> alle Kästen werden auch geschlossen."
     Else
-        WriteLogFile "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
+        AddLogEntry "Absatzformat " & NameOfFormat & " wurde nicht korrekt geschlossen. Bitte alle (" & l & ") Vorkommen prüfen."
     End If
     reset_search
     ' MsgBox "Ende: Sub count_style_modulo_even() für Absatzformat: " & NameOfFormat
@@ -564,7 +610,7 @@ Sub check_style_before_odd()
                 ' MsgBox "correctFormat: " & correctFormat & vbCrLf & "Wenn TRUE, enthält Dokument keinen Fehler."
                 ' check if variable is FALSE and if so, write to logfile
                 If correctFormat = False Then
-                    WriteLogFile "Ungeradzahligen Vorkommen von Absätzen mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                    AddLogEntry "Ungeradzahligen Vorkommen von Absätzen mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
                 End If
             End If
         End If
@@ -609,7 +655,7 @@ Sub check_odd_kastenheadline_empty()
                     End If
 
                     ' Write to the log file
-                    WriteLogFile "Ungerades Vorkommen von 'SuS_Kastenheadline' darf nicht leer sein: [" & first40Chars & "]."
+                    AddLogEntry "Ungerades Vorkommen von 'SuS_Kastenheadline' darf nicht leer sein: [" & first40Chars & "]."
                 End If
             End If
         End If
@@ -654,7 +700,7 @@ Sub check_invalid_styles()
     If invalidStyles.Count > 0 Then
         For Each styleName In invalidStyles
             wrtstring = "Ungültiges Absatz- oder Zeichenformat gefunden: " & styleName
-            WriteLogFile wrtstring
+            AddLogEntry wrtstring
         Next styleName
     End If
 End Sub
@@ -721,7 +767,7 @@ Public Function FindParagraphBeforeMustBe(ByVal SearchRange As Word.Range, ByVal
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                AddLogEntry "Absatz mit Format " & NameOfFormat & " muss stets ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -764,7 +810,7 @@ Public Function FindParagraphBeforeMustNotBe(ByVal SearchRange As Word.Range, By
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = True Then
-                WriteLogFile "Absatz mit Format " & NameOfFormat & " darf nie ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
+                AddLogEntry "Absatz mit Format " & NameOfFormat & " darf nie ein Absatz mit diesen Formaten vorangehen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -811,7 +857,7 @@ Public Function FindParagraphAfterMustBe(ByVal SearchRange As Word.Range, ByVal 
             ' MsgBox "correctFormat: " & correctFormat & vbCrLf & "Wenn TRUE, enthält Dokument keinen Fehler."
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = False Then
-                WriteLogFile "Auf Absatzformat " & NameOfFormat & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
+                AddLogEntry "Auf Absatzformat " & NameOfFormat & " muss stets eines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -859,7 +905,7 @@ Public Function FindParagraphAfterMustNotBe(ByVal SearchRange As Word.Range, ByV
             Next
             ' check if variable is FALSE and if so, write to logfile
             If correctFormat = True Then
-                WriteLogFile "Auf Absatzformat " & NameOfFormat & " darf keines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
+                AddLogEntry "Auf Absatzformat " & NameOfFormat & " darf keines dieser Absatzformate folgen: " & multiStyles & " [" & first40Chars & "]"
             End If
             ' MsgBox "correctFormat: " & correctFormat
         End If
@@ -897,22 +943,22 @@ End Function
 
 
 
-Sub WriteLogFile(wrtstring As String)
-    Dim logEntry As String
-    Dim logFileNumber As Integer
+' Sub WriteLogFile(wrtstring As String)
+'     Dim logEntry As String
+'     Dim logFileNumber As Integer
  
-    ' Create the log entry
-    logEntry = Now & " - This is a log entry."
+'     ' Create the log entry
+'     logEntry = Now & " - This is a log entry."
  
-    ' Get a free file number
-    logFileNumber = FreeFile
+'     ' Get a free file number
+'     logFileNumber = FreeFile
  
-    ' Open the file for appending
-    Open logFilePath For Append As #logFileNumber
+'     ' Open the file for appending
+'     Open logFilePath For Append As #logFileNumber
  
-    ' Write the log entry to the file
-    Write #1, Now() & " : " & wrtstring & vbCrLf & "----" & vbCrLf
+'     ' Write the log entry to the file
+'     Write #1, Now() & " : " & wrtstring & vbCrLf & "----" & vbCrLf
  
-    ' Close the file
-    Close #logFileNumber
-End Sub
+'     ' Close the file
+'     Close #logFileNumber
+' End Sub
