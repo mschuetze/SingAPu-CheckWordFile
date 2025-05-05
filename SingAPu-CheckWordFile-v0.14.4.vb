@@ -1,4 +1,4 @@
-' version 0.14.3
+' version 0.14.4
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -657,7 +657,7 @@ Sub check_odd_kastenheadline_empty()
                     End If
 
                     ' Write to the log file
-                    AddLogEntry "Ungerades Vorkommen von 'SuS_Kastenheadline' darf nicht leer sein: [" & first40Chars & "]."
+                    AddLogEntry "Ungerades Vorkommen von 'SuS_Kastenheadline' darf nicht leer sein: [" & first40Chars & "]. Ausname: Cheatsheets/Infografiken"
                 End If
             End If
         End If
