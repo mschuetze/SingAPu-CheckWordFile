@@ -1,4 +1,4 @@
-' version 0.15.1
+' version 0.16.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -79,10 +79,17 @@ InitializeLog ' Initialize the logEntries collection
     Dim emptySpaceChar As String
     Dim foundInvalid As Boolean
     Dim invalidList As String
+    ' Missing declarations (required with Option Explicit)
+    Dim cleanedFileName As String
+    Dim fileToCheckPath As String
     
     fileName = ActiveDocument.Name
     ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
-    baseFileName = Left(fileName, InStrRev(fileName, ".") - 1)
+    If InStrRev(fileName, ".") > 0 Then
+        baseFileName = Left(fileName, InStrRev(fileName, ".") - 1)
+    Else
+        baseFileName = fileName
+    End If
     ' MsgBox "baseFileName: " & baseFileName
 
     ' NEW: Prüfen, ob die Dateiendung .docx ist; falls nicht, ins Log schreiben
@@ -109,33 +116,17 @@ InitializeLog ' Initialize the logEntries collection
         currentChar = Mid(baseFileName, i, 1)
         ' MsgBox "currentChar: " & currentChar
         
-        ' Überprüfen auf Sonderzeichen
+        ' Überprüfen auf Sonderzeichen / Umlaute / Leerzeichen und Liste aufbauen
         If InStr(invalidChars, currentChar) > 0 Then
-            MsgBox "Der Dateiname (" & baseFileName & ") enthält ein Sonderzeichen"
-            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
-            End If
+            If InStr(invalidList, currentChar) = 0 Then invalidList = invalidList & currentChar & " "
             foundInvalid = True
         End If
-
-        ' Überprüfen auf Umlaute
         If InStr(umlautChars, currentChar) > 0 Then
-            MsgBox "Der Dateiname (" & baseFileName & ") enthält einen Umlaut"
-            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
-            End If
+            If InStr(invalidList, currentChar) = 0 Then invalidList = invalidList & currentChar & " "
             foundInvalid = True
         End If
-
-        ' Überprüfen auf Leerzeichen
         If InStr(emptySpaceChar, currentChar) > 0 Then
-            MsgBox "Der Dateiname (" & baseFileName & ") enthält ein Leerzeichen"
-            If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
-                invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
-            End If
+            If InStr(invalidList, "Leerzeichen") = 0 Then invalidList = invalidList & "Leerzeichen "
             foundInvalid = True
         End If
     Next i
@@ -345,85 +336,119 @@ Dim fileExtension As String
 Dim valid As Boolean
 Dim Dateiendung As Variant
 Dim EndungGefunden As Boolean
+Dim ext As Variant ' loop variable for extensions
 
 ' Die Formatvorlage, die du suchen möchtest
 Formatvorlage = "SuS_Bilddateiname"
 
-' Definiere die gängigen Bild-Dateiendungen
+' Erlaubte Bild-Endungen definieren
 Dateiendung = Array(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tif", ".tiff", ".webp", ".svg")
-
 
 ' Gehe alle Absätze im Dokument durch
 For Each Absatz In ActiveDocument.Paragraphs
     ' Wenn der Absatz die angegebene Formatvorlage hat
     If Absatz.Style = Formatvorlage Then
         foundInvalid = False
-        EndungGefunden = False ' Standardmäßig auf ungültig setzen
         invalidList = "" ' Leere Liste für ungültige Zeichen
-        ' Hole den Text des Absatzes
+
+        ' Hole und bereinige den Text des Absatzes
         paraText = Absatz.Range.Text
-        ' MsgBox "paraText: " & paraText
-        ' Schleife über alle gängigen Bilddateiendungen
-        For i = LBound(Dateiendung) To UBound(Dateiendung)
-            If InStr(1, paraText, Dateiendung(i), vbTextCompare) > 0 Then
-                EndungGefunden = True
-                Exit For
-            End If
-        Next i
+        cleanedFileName = Replace(paraText, Chr(13), "")
+        cleanedFileName = Replace(cleanedFileName, Chr(10), "")
+        cleanedFileName = Trim(cleanedFileName)
+
+        ' Falls ein kompletter Pfad angegeben ist, nur den Dateinamen extrahieren
+        If InStrRev(cleanedFileName, "/") > 0 Then cleanedFileName = Mid(cleanedFileName, InStrRev(cleanedFileName, "/") + 1)
+        If InStrRev(cleanedFileName, "\") > 0 Then cleanedFileName = Mid(cleanedFileName, InStrRev(cleanedFileName, "\") + 1)
+
+        ' Optional: für die Zeichenprüfung die Dateiendung entfernen (falls vorhanden)
+        If InStrRev(cleanedFileName, ".") > 0 Then
+            baseAbsatzText = Left(cleanedFileName, InStrRev(cleanedFileName, ".") - 1)
+        Else
+            baseAbsatzText = cleanedFileName
+        End If
+
+        ' Prüfen, ob die Dateiendung vorhanden und erlaubt ist
+        EndungGefunden = False
+        dotPos = InStrRev(cleanedFileName, ".")
+        If dotPos > 0 Then
+            fileExtension = LCase(Mid(cleanedFileName, dotPos)) ' inkl. führendem Punkt
+            For Each ext In Dateiendung
+                If fileExtension = LCase(ext) Then
+                    EndungGefunden = True
+                    Exit For
+                End If
+            Next ext
+        Else
+            fileExtension = ""
+        End If
 
         If Not EndungGefunden Then
-            AddLogEntry "Dem Bildverweis '" & paraText & "' fehlt eine Dateiendung (.tif, .jpg, usw)"
+            AddLogEntry "Bildverweis hat fehlende oder ungültige Dateiendung: " & cleanedFileName & " (erwartet: " & Join(Dateiendung, ", ") & ")"
+        End If
+
+        ' Überprüfe jeden Charakter im (ohne Endung) Dateinamen auf Sonderzeichen / Umlaute / Leerzeichen
+        For j = 1 To Len(baseAbsatzText)
+            currentChar = Mid(baseAbsatzText, j, 1)
+            If InStr(invalidChars, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then invalidList = invalidList & currentChar & " "
+                foundInvalid = True
+            End If
+            If InStr(umlautChars, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then invalidList = invalidList & currentChar & " "
+                foundInvalid = True
+            End If
+            If InStr(emptySpaceChar, currentChar) > 0 Then
+                If InStr(invalidList, currentChar) = 0 Then invalidList = invalidList & "Leerzeichen "
+                foundInvalid = True
+            End If
+        Next j
+
+        If foundInvalid Then
+            AddLogEntry "Bildverweis " & cleanedFileName & " enthält folgende Sonderzeichen: " & invalidList
+        End If
+
+        ' Prüfen, ob die referenzierte Bilddatei im Dokument-Ordner existiert
+        ' Wenn Dokument nicht gespeichert, kann nicht geprüft werden
+        If ActiveDocument.Path = "" Then
+            AddLogEntry "Dokument nicht gespeichert: Kann nicht prüfen, ob Bilddatei vorhanden ist: " & cleanedFileName
+            GoTo NextAbsatz
+        End If
+
+        fileToCheckPath = ActiveDocument.Path & "/" & cleanedFileName
+        If Dir(fileToCheckPath) <> "" Then
+            ' exakte Datei gefunden -> alles gut
         Else
-            ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
-            baseAbsatzText = Left(paraText, InStrRev(paraText, ".") - 1)
-            ' MsgBox "baseAbsatzText: " & baseAbsatzText
-
-            ' Überprüfe jeden Charakter im Absatz auf Sonderzeichen
-            For j = 1 To Len(baseAbsatzText)
-                currentChar = Mid(baseAbsatzText, j, 1)
-
-                ' Überprüfen auf Sonderzeichen
-                If InStr(invalidChars, currentChar) > 0 Then
-                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                        invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
-                    End If
-                    foundInvalid = True
+            ' exakte Datei nicht gefunden -> prüfen, ob eine Datei mit gleichem Basisnamen und einer erlaubten Endung existiert
+            Dim foundAlternative As Boolean
+            Dim baseNameOnly As String
+            Dim altPath As String
+            Dim matchedFile As String
+            foundAlternative = False
+            dotPos = InStrRev(cleanedFileName, ".")
+            If dotPos > 0 Then
+                baseNameOnly = Left(cleanedFileName, dotPos - 1)
+            Else
+                baseNameOnly = cleanedFileName
+            End If
+            For Each ext In Dateiendung
+                altPath = ActiveDocument.Path & "/" & baseNameOnly & ext
+                If Dir(altPath) <> "" Then
+                    foundAlternative = True
+                    matchedFile = baseNameOnly & ext
+                    Exit For
                 End If
+            Next ext
 
-                ' Überprüfen auf Umlaute
-                If InStr(umlautChars, currentChar) > 0 Then
-                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: " & currentChar, vbExclamation
-                        invalidList = invalidList & currentChar & " " ' Füge das ungültige Zeichen der Liste hinzu
-                    End If
-                    foundInvalid = True
-                End If
-
-                ' Überprüfen auf Leerzeichen
-                If InStr(emptySpaceChar, currentChar) > 0 Then
-                    If InStr(invalidList, currentChar) = 0 Then ' Verhindern von Duplikaten in der Liste
-                        ' MsgBox "Der Dateiname enthält ein ungültiges Sonderzeichen: Leerzeichen", vbExclamation
-                        invalidList = invalidList & "Leerzeichen " ' Füge das ungültige Zeichen der Liste hinzu
-                    End If
-                    foundInvalid = True
-                End If
-
-            Next j
-
-            ' Wenn Sonderzeichen gefunden wurden, in log.txt vermerken
-            If foundInvalid Then
-                AddLogEntry "Bildverweis " & paraText & "enthält folgende Sonderzeichen: " & invalidList
+            If Not foundAlternative Then
+                AddLogEntry "Bilddatei nicht gefunden: " & cleanedFileName & " (verweisender Absatz: [" & First40Characters(Absatz) & "])"
+            Else
+                ' Alternative mit anderer Endung gefunden -> OK, kein Log-Eintrag nötig
             End If
         End If
     End If
+NextAbsatz:
 Next Absatz
-
-' MsgBox "Ende: 'find special chars in image reference'"
-
-
-
-
 
 '----------------------------------------------------------
 '----- CHECK IF NUMBER OF INSTANCES FORMAT X IS AN INTEGER MULTIPLE OF 2 (FORMAT ALWAYS NEEDS TO BE CLOSED) -----
