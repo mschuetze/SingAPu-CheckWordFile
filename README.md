@@ -2,6 +2,7 @@
 A Visual Basic script for MS Word that checks a word file (in our case an article) for different requirements.
 
 ## What it checks
+- Check if file extension is ".docx" – if not, output error.
 - Validates the .docx filename. If special characters are included, the script stops and throws an error. Special characters are:
     - German Umlaute
     - space

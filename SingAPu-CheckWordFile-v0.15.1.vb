@@ -1,4 +1,4 @@
-' version 0.14.4
+' version 0.15.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -84,6 +84,18 @@ InitializeLog ' Initialize the logEntries collection
     ' Entfernen der Dateiendung (alles nach dem letzten Punkt)
     baseFileName = Left(fileName, InStrRev(fileName, ".") - 1)
     ' MsgBox "baseFileName: " & baseFileName
+
+    ' NEW: Prüfen, ob die Dateiendung .docx ist; falls nicht, ins Log schreiben
+    Dim fileExt As String
+    If InStrRev(fileName, ".") > 0 Then
+        fileExt = LCase(Mid(fileName, InStrRev(fileName, ".") + 1))
+    Else
+        fileExt = ""
+    End If
+
+    If fileExt <> "docx" Then
+        AddLogEntry "Dateiendung ist nicht .docx: " & fileName
+    End If
 
     invalidChars = "!@#$%^&*()+={}[]|\:;""'<>,.?/~`" ' Hier definierst du die Sonderzeichen, die du überprüfen möchtest.
     umlautChars = "äöüÄÖÜß" ' Umlaute und Sonderzeichen, die überprüft werden sollen.
