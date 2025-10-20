@@ -55,6 +55,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
   - SuS_Kasten_Absatzheadline
 - Check if content of paragraphs with format **SuS_Bilddateiname** contains a file extension (.tif, .jpg, etc). If NOT, output error. If it does, check if it contains special characters (see filename validation) – if it does, output error.
 - Find each odd occurrence of paragraphs with format **SuS_Kastenheadline** and check if they´re are always preceded by a paragraph with the format **SuS_Mengentext** – if not output error.
+- Check if paragraph with format **SuS_Bilddateiname** exists. If so, check if filename (without extension) corresponds with image file in Word-doc´s folder. Basically checks if the image files that the .docx file referes to actually exist.
 - Check if document only uses styles (character + paragraph) whose name start with "SuS_". If not, output an error.
 
 The script collects all errors in a log file. 
