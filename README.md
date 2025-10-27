@@ -47,6 +47,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check if odd numbered instances of **SuS_Kastenheadline** are empty. If so, output an error.
 - Check whether paragraphs with format **SuS_Bilddateiname** are always preceded by either a paragraph with the format **SuS_Mengentext** or **SuS_Kastentext** – if not output error.
 - Check if paragraph BEFORE + AFTER a paragraph with format **SuS_Kastenheadline** are NOT using **SuS_Kastenheadline** as well – if not output error.
+- Check if odd-numbered instance of paragraph with format **SuS_Kastenheadline** include the string "Listing". If it does, check every following paragraph until the next instance of **SuS_Kastenheadline**. If a paragraph is NOT of style **SuS_Quellcode**, output an error in the log.
 - Check if paragraphs with format **SuS_Bild/Tabellenunterschrift** are always followed by one of those formats – if not output error:
   - SuS_Mengentext
   - SuS_Kastentext
