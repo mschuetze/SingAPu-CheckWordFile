@@ -1,4 +1,4 @@
-' version 0.16.1
+' version 0.16.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -488,14 +488,12 @@ check_style_before_odd
 NameOfFormat = "SuS_Kastenheadline"
 check_odd_kastenheadline_empty
 
-
-
-
+' NEW: Prüfe bei ungeraden SuS_Kastenheadline mit "Listing", dass alle folgenden Absätze bis zur nächsten SuS_Kastenheadline SuS_Quellcode sind
+check_listing_followed_by_quellcode
 
 '----------------------------------------------------------
 '----- CHECK IF ONLY STYLES WITH STRING 'SuS_' ARE BEING USED ---
 '----------------------------------------------------------
-
 check_invalid_styles
 
 
@@ -982,3 +980,48 @@ Function First40Characters(para As Paragraph) As String
     ' Gib die ersten 40 Zeichen zurück
     First40Characters = first40Chars
 End Function
+
+
+Sub check_listing_followed_by_quellcode()
+    Dim headlineCount As Long
+    Dim hPara As Paragraph
+    Dim p As Paragraph
+    Dim headlineText As String
+
+    headlineCount = 0
+
+    For Each hPara In ActiveDocument.Paragraphs
+        If hPara.Style = "SuS_Kastenheadline" Then
+            headlineCount = headlineCount + 1
+
+            ' Only check odd-numbered instances
+            If headlineCount Mod 2 <> 0 Then
+                ' Normalize headline text and check for "Listing"
+                headlineText = Replace(hPara.Range.Text, Chr(13), "")
+                headlineText = Replace(headlineText, Chr(10), "")
+                headlineText = Trim(headlineText)
+
+                If InStr(1, headlineText, "Listing", vbTextCompare) > 0 Then
+                    ' Walk following paragraphs until the next SuS_Kastenheadline (closing)
+                    Set p = hPara.Next
+                    Do While Not p Is Nothing And p.Style <> "SuS_Kastenheadline"
+                        If p.Style <> "SuS_Quellcode" Then
+                            ' Prepare cleaned texts
+                            Dim headlineTextClean As String
+                            Dim offendingText As String
+                            headlineTextClean = Replace(headlineText, Chr(13), "")
+                            headlineTextClean = Replace(headlineTextClean, Chr(10), "")
+                            headlineTextClean = Trim(headlineTextClean)
+                            offendingText = Replace(p.Range.Text, Chr(13), "")
+                            offendingText = Replace(offendingText, Chr(10), "")
+                            offendingText = Trim(offendingText)
+                            ' Log detailed message
+                            AddLogEntry "Ungültiges Absatzformat in Codelisting (" & headlineTextClean & ") gefunden: 'SuS_Quellcode' erwartet aber '" & p.Style & "' gefunden: " & offendingText
+                        End If
+                        Set p = p.Next
+                    Loop
+                End If
+            End If
+        End If
+    Next hPara
+End Sub
