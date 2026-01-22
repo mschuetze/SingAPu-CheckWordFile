@@ -1,4 +1,4 @@
-' version 0.18.0
+' version 0.19.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -269,9 +269,10 @@ NameOfFormat = "SuS_Bild/Tabellenunterschrift"
 multiStyles = "SuS_Mengentext,SuS_Kastentext,SuS_Absatzheadline,SuS_Unter_Absatzheadline,SuS_Kasten_Absatzheadline"
 IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
 
-NameOfFormat = "SuS_Bilddateiname"
-multiStyles = "SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie"
-IsFound = FindParagraphAfterMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+' NEW: Überprüfe zusätzlich die bedingte Regel für "SuS_Bilddateiname"
+' SuS_Kastentext darf folgen, wenn der Absatz vor SuS_Bilddateiname eine SuS_Kastenheadline mit "Porträt" ist
+' Sonst darf nur SuS_Bild/Tabellenunterschrift oder SuS_Autor_Kurzbiografie folgen
+check_bilddateiname_follows_rule
 
 NameOfFormat = "SuS_Links_und_Literatur_Headline"
 multiStyles = "SuS_Links_und_Literatur_Text"
@@ -301,9 +302,7 @@ IsFound = FindParagraphAfterMustNotBe(ActiveDocument.StoryRanges(wdMainTextStory
 '----- CHECK WHETHER FORMAT X EXISTS AND IF SO, CHECK WHETHER PREVIOUS PARAGRAPH IS FORMAT Y -----
 '----------------------------------------------------------
 
-NameOfFormat = "SuS_Bilddateiname"
-multiStyles = "SuS_Mengentext,SuS_Kastentext"
-IsFound = FindParagraphBeforeMustBe(ActiveDocument.StoryRanges(wdMainTextStory), NameOfFormat)
+' ENTFERNT: NameOfFormat = "SuS_Bilddateiname" wird jetzt in check_bilddateiname_follows_rule gehandhabt
 
 
 
@@ -1077,5 +1076,82 @@ Sub check_italic_formats()
                 Exit For ' Absatz überprüft, nächster
             End If
         Next formatIndex
+    Next para
+End Sub
+
+
+
+
+Sub check_bilddateiname_follows_rule()
+    '-------------------------------------------
+    ' Überprüfe die Regeln für "SuS_Bilddateiname"
+    ' 1. Was folgt nach SuS_Bilddateiname?
+    '    - Standard: SuS_Bild/Tabellenunterschrift oder SuS_Autor_Kurzbiografie
+    '    - Exception: SuS_Kastentext darf folgen, aber NUR wenn der vorherige Absatz 
+    '      eine SuS_Kastenheadline mit "Porträt" ist
+    '-------------------------------------------
+    
+    Dim para As Paragraph
+    Dim prevPara As Paragraph
+    Dim nextPara As Paragraph
+    Dim headlineText As String
+    Dim first40Chars As String
+    Dim isValidCondition As Boolean
+    
+    ' Gehe alle Absätze durch
+    For Each para In ActiveDocument.Paragraphs
+        ' Suche nach "SuS_Bilddateiname"
+        If para.Style = "SuS_Bilddateiname" Then
+            ' Überprüfe den vorherigen Absatz
+            If Not para.Previous Is Nothing Then
+                Set prevPara = para.Previous
+                
+                ' Der vorherige Absatz muss entweder SuS_Mengentext oder SuS_Kastentext sein
+                If prevPara.Style <> "SuS_Mengentext" And prevPara.Style <> "SuS_Kastenheadline" And prevPara.Style <> "SuS_Kastentext" Then
+                    first40Chars = First40Characters(para)
+                    AddLogEntry "Absatz mit Format 'SuS_Bilddateiname' muss stets ein Absatz mit diesen Formaten vorangehen: SuS_Mengentext, SuS_Kastenheadline, SuS_Kastentext [" & first40Chars & "]"
+                End If
+            End If
+            
+            ' Überprüfe den nächsten Absatz
+            If Not para.Next Is Nothing Then
+                Set nextPara = para.Next
+                
+                ' Der nächste Absatz muss einer der erlaubten Formate sein
+                If nextPara.Style = "SuS_Kastentext" Then
+                    ' Überprüfe die Bedingung für SuS_Kastentext
+                    isValidCondition = False
+                    
+                    If Not para.Previous Is Nothing Then
+                        Set prevPara = para.Previous
+                        
+                        ' Der vorherige Absatz muss "SuS_Kastenheadline" sein
+                        If prevPara.Style = "SuS_Kastenheadline" Then
+                            ' Hole den Text der SuS_Kastenheadline
+                            headlineText = prevPara.Range.Text
+                            headlineText = Replace(headlineText, Chr(13), "")
+                            headlineText = Replace(headlineText, Chr(10), "")
+                            headlineText = Trim(headlineText)
+                            
+                            ' Überprüfe, ob der Text "Porträt" enthält
+                            If InStr(1, headlineText, "Porträt", vbTextCompare) > 0 Then
+                                isValidCondition = True
+                            End If
+                        End If
+                    End If
+                    
+                    ' Wenn die Bedingung nicht erfüllt ist, schreibe einen Fehler
+                    If Not isValidCondition Then
+                        first40Chars = First40Characters(para)
+                        AddLogEntry "Nach Format 'SuS_Bilddateiname' darf 'SuS_Kastentext' nur folgen, wenn der vorherige Absatz eine 'SuS_Kastenheadline' mit Inhalt 'Porträt' ist: [" & first40Chars & "]"
+                    End If
+                
+                ElseIf nextPara.Style <> "SuS_Bild/Tabellenunterschrift" And nextPara.Style <> "SuS_Autor_Kurzbiografie" Then
+                    ' Wenn weder SuS_Kastentext noch die Standardformate folgen, ist es ein Fehler
+                    first40Chars = First40Characters(para)
+                    AddLogEntry "Auf Absatzformat 'SuS_Bilddateiname' muss stets eines dieser Absatzformate folgen: SuS_Bild/Tabellenunterschrift,SuS_Autor_Kurzbiografie,SuS_Kastentext (mit Bedingung) [" & first40Chars & "]"
+                End If
+            End If
+        End If
     Next para
 End Sub
