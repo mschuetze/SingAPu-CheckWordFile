@@ -1,4 +1,4 @@
-' version 0.17.0
+' version 0.18.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -496,6 +496,10 @@ check_listing_followed_by_quellcode
 '----------------------------------------------------------
 check_invalid_styles
 
+'----------------------------------------------------------
+'----- CHECK IF CERTAIN FORMATS ARE NOT ITALIC ---
+'----------------------------------------------------------
+check_italic_formats
 
 
 
@@ -1024,4 +1028,54 @@ Sub check_listing_followed_by_quellcode()
             End If
         End If
     Next hPara
+End Sub
+
+
+
+
+Sub check_italic_formats()
+    '-------------------------------------------
+    ' Überprüfe, ob bestimmte Formate kursiv sind
+    ' Formate dürfen weder als Formatvorlage noch als Standardformatierung kursiv sein
+    '-------------------------------------------
+    
+    Dim para As Paragraph
+    Dim prohibitedFormats As Variant
+    Dim formatIndex As Integer
+    Dim currentFormat As String
+    Dim charRange As Variant
+    Dim charIndex As Integer
+    Dim isItalic As Boolean
+    Dim first40Chars As String
+    
+    ' Liste der Formate, die nicht kursiv sein dürfen
+    prohibitedFormats = Array("SuS_Headline", "SuS_Subhead1", "SuS_Bild/Tabellenunterschrift", "SuS_Absatzheadlines", "SuS_Kastenheadline", "SuS_Tabellenkopf", "SuS_Quellcode", "SuS_Quellcode_Kommentar", "SuS_Links_und_Literatur_Headline", "SuS_Links_und_Literatur_Text")
+    
+    ' Gehe alle Absätze durch
+    For Each para In ActiveDocument.Paragraphs
+        currentFormat = para.Style
+        
+        ' Überprüfe, ob der aktuelle Absatz eines der verbotenen Formate hat
+        For formatIndex = LBound(prohibitedFormats) To UBound(prohibitedFormats)
+            If currentFormat = prohibitedFormats(formatIndex) Then
+                ' Überprüfe das gesamte Absatzformat auf Italic-Formatierung
+                If para.Range.Font.Italic = True Or para.Range.Font.Italic = -1 Then
+                    first40Chars = First40Characters(para)
+                    AddLogEntry "Format '" & currentFormat & "' darf nicht kursiv sein: [" & first40Chars & "]"
+                End If
+                
+                ' Überprüfe jeden Charakter im Absatz auf Italic-Formatierung
+                For Each charRange In para.Range.Characters
+                    If charRange.Font.Italic = True Or charRange.Font.Italic = -1 Then
+                        ' Wenn mind. ein Zeichen kursiv ist, log den Fehler
+                        first40Chars = First40Characters(para)
+                        AddLogEntry "Format '" & currentFormat & "' darf nicht kursiv sein: [" & first40Chars & "]"
+                        Exit For ' Nur einmal pro Absatz melden
+                    End If
+                Next charRange
+                
+                Exit For ' Absatz überprüft, nächster
+            End If
+        Next formatIndex
+    Next para
 End Sub
