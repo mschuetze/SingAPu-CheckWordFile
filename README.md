@@ -58,6 +58,17 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Find each odd occurrence of paragraphs with format **SuS_Kastenheadline** and check if they´re are always preceded by a paragraph with the format **SuS_Mengentext** – if not output error.
 - Check if paragraph with format **SuS_Bilddateiname** exists. If so, check if filename (without extension) corresponds with image file in Word-doc´s folder. Basically checks if the image files that the .docx file referes to actually exist.
 - Check if document only uses styles (character + paragraph) whose name start with "SuS_". If not, output an error.
+- Check if paragraphs with the following style contain words/strings that are **italic**:
+  - SuS_Headline
+  - SuS_Subhead1
+  - SuS_Bild/Tabellenunterschrift
+  - SuS_Absatzheadlines
+  - SuS_Kastenheadline
+  - SuS_Tabellenkopf
+  - SuS_Quellcode
+  - SuS_Quellcode_Kommentar
+  - SuS_Links_und_Literatur_Headline
+  - SuS_Links_und_Literatur_Text
 
 The script collects all errors in a log file. 
 
