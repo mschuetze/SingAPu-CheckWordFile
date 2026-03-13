@@ -1,4 +1,4 @@
-' version 0.19.0
+' version 0.20.8
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -7,7 +7,7 @@ Option Explicit
 Public NameOfFormat As String
 Public NameOfFormatAfter As String
 Public NameOfFormatBefore As String
-Dim multiStyles As String, I As Integer
+Dim multiStyles As String, I As Long
 Dim aStyleList As Variant
 Dim counter As Long, s As String
 Dim correctFormat As Boolean
@@ -15,13 +15,13 @@ Dim logFileName As String
 Dim NameContainsSpecialChars As Boolean
 Dim char As String
 Dim logFilePath As String
-Dim logFile As Integer
+Dim logFile As Long
 Dim para As Paragraph
 Dim paraText As String
 Dim first40Chars As String
 Dim previousPara As Paragraph
 Dim nextPara As Paragraph
-Dim styleCount As Integer
+Dim styleCount As Long
 Dim logEntries As Collection ' Declare a global collection for log entries
 
 
@@ -39,7 +39,7 @@ Sub AddLogEntry(entry As String)
 End Sub
 
 Sub WriteLogEntries()
-    Dim logFileNumber As Integer
+    Dim logFileNumber As Long
     Dim entry As Variant
 
     ' Get a free file number
@@ -73,7 +73,7 @@ InitializeLog ' Initialize the logEntries collection
     Dim fileName As String
     Dim baseFileName As String
     Dim invalidChars As String
-    Dim i As Integer
+    Dim i As Long
     Dim currentChar As String
     Dim umlautChars As String
     Dim emptySpaceChar As String
@@ -329,8 +329,8 @@ IsFound = FindParagraphBeforeMustNotBe(ActiveDocument.StoryRanges(wdMainTextStor
 Dim Absatz As Paragraph
 Dim Formatvorlage As String
 Dim baseAbsatzText As String
-Dim j As Integer
-Dim dotPos As Integer
+Dim j As Long
+Dim dotPos As Long
 Dim fileExtension As String
 Dim valid As Boolean
 Dim Dateiendung As Variant
@@ -502,6 +502,11 @@ check_italic_formats
 
 
 
+'----------------------------------------------------------
+'----- CHECK FOR DIRECT BOLD/ITALIC WITHOUT CHARACTER STYLE ---
+'----------------------------------------------------------
+check_direct_bold_italic_without_character_style
+
 
 '----------------------------------------------------------
 '----- WRITE ALL LOG ENTRIES TO THE FILE ------------------
@@ -527,7 +532,7 @@ End Sub
 
 Sub count_style_onlyone()
     ' MsgBox "Start: Sub count_style_onlyone() für Absatzformat: " & NameOfFormat
-    Dim l As Integer
+    Dim l As Long
     l = 0
     reset_search
     With ActiveDocument.Range.Find
@@ -552,7 +557,7 @@ End Sub
 
 Sub count_style_lessthantwo()
     ' MsgBox "Start: Sub count_style_lessthantwo() für Absatzformat: " & NameOfFormat
-    Dim l As Integer
+    Dim l As Long
     l = 0
     reset_search
     With ActiveDocument.Range.Find
@@ -577,7 +582,7 @@ End Sub
 
 Sub count_style_modulo_even()
     ' MsgBox "Start: Sub count_style_modulo_even() für Absatzformat: " & NameOfFormat
-    Dim l As Integer
+    Dim l As Long
     l = 0
     reset_search
     With ActiveDocument.Range.Find
@@ -590,9 +595,9 @@ Sub count_style_modulo_even()
     Wend
     End With
 
-    Dim formatClosed As Integer
-    Dim number1 As Integer
-    Dim number2 As Integer
+    Dim formatClosed As Long
+    Dim number1 As Long
+    Dim number2 As Long
 
     number1 = l 'number of instances found
     number2 = 2 'integer multiple of 2 (opened + closed)
@@ -1040,10 +1045,10 @@ Sub check_italic_formats()
     
     Dim para As Paragraph
     Dim prohibitedFormats As Variant
-    Dim formatIndex As Integer
+    Dim formatIndex As Long
     Dim currentFormat As String
     Dim charRange As Variant
-    Dim charIndex As Integer
+    Dim charIndex As Long
     Dim isItalic As Boolean
     Dim first40Chars As String
     
@@ -1077,6 +1082,186 @@ Sub check_italic_formats()
             End If
         Next formatIndex
     Next para
+End Sub
+
+
+
+
+Sub check_direct_bold_italic_without_character_style()
+    '-------------------------------------------
+    ' Prüft auf direktes Fett/Kursiv im Dokument ohne zugeordnetes Zeichenformat
+    ' Zusätzlich wird geprüft, ob der Absatzstil für das gefundene Format erlaubt ist.
+    '-------------------------------------------
+    
+    Dim searchRange As Range
+    Dim first40Chars As String
+    Dim foundText As String
+    Dim paraStyle As String
+    Dim allowedBoldFormats As Variant
+    Dim allowedItalicFormats As Variant
+    Dim fmt As Variant
+    Dim styleAllowed As Boolean
+
+    allowedBoldFormats = Array("SuS_Autorname", "SuS_Kastenheadline", "SuS_Absatzheadline", "SuS_Unter_Absatzheadline", "SuS_Kasten_Absatzheadline", "SuS_Tabellenkopf", "SuS_Links_und_Literatur_Headline", "SuS_Interview_Frage", "SuS_Interview_Zitat")
+    allowedItalicFormats = Array("SuS_Autor_Kurzbiografie", "SuS_Interview_Zitat")
+
+    ' 1) Find Bold (direct formatting)
+    Set searchRange = ActiveDocument.Content
+    With searchRange.Find
+        .ClearFormatting
+        .Font.Bold = True
+        .Text = ""
+        .Format = True
+        .Forward = True
+        .Wrap = wdFindStop
+    End With
+
+    Do While searchRange.Find.Execute
+        paraStyle = searchRange.Paragraphs(1).Style.NameLocal
+        styleAllowed = False
+        For Each fmt In allowedBoldFormats
+            If paraStyle = fmt Then
+                styleAllowed = True
+                Exit For
+            End If
+        Next fmt
+
+        ' Nur dann loggen, wenn keine Zeichenformatvorlage genutzt wird
+        ' und der Absatzstil nicht zu den erlaubten Formaten gehört.
+        If searchRange.Style.Type <> wdStyleTypeCharacter Then
+            If Not styleAllowed Then
+                first40Chars = First40Characters(searchRange.Paragraphs(1))
+                foundText = Trim(searchRange.Text)
+                foundText = Replace(foundText, Chr(13), "")
+                foundText = Replace(foundText, Chr(10), "")
+
+                ' Debug: Markiere den gefundenen Bereich im Dokument
+                'searchRange.HighlightColorIndex = wdYellow
+                AddLogEntry "Direktes Fett ohne Zeichenformat gefunden in Absatz [" & first40Chars & "]: [" & foundText & "]"
+            End If
+        End If
+
+        searchRange.Start = searchRange.End
+        searchRange.End = ActiveDocument.Content.End
+    Loop
+
+    ' 2) Find Italic (direct formatting)
+    Set searchRange = ActiveDocument.Content
+    With searchRange.Find
+        .ClearFormatting
+        .Font.Italic = True
+        .Text = ""
+        .Format = True
+        .Forward = True
+        .Wrap = wdFindStop
+    End With
+
+    Do While searchRange.Find.Execute
+        paraStyle = searchRange.Paragraphs(1).Style.NameLocal
+        styleAllowed = False
+        For Each fmt In allowedItalicFormats
+            If paraStyle = fmt Then
+                styleAllowed = True
+                Exit For
+            End If
+        Next fmt
+
+        ' Nur dann loggen, wenn keine Zeichenformatvorlage genutzt wird
+        ' und der Absatzstil nicht zu den erlaubten Formaten gehört.
+        If searchRange.Style.Type <> wdStyleTypeCharacter Then
+            If Not styleAllowed Then
+                first40Chars = First40Characters(searchRange.Paragraphs(1))
+                foundText = Trim(searchRange.Text)
+                foundText = Replace(foundText, Chr(13), "")
+                foundText = Replace(foundText, Chr(10), "")
+
+                ' Debug: Markiere den gefundenen Bereich im Dokument
+                ' searchRange.HighlightColorIndex = wdYellow
+                AddLogEntry "Direktes Kursiv ohne Zeichenformat gefunden in Absatz [" & first40Chars & "]: [" & foundText & "]"
+            End If
+        End If
+
+        searchRange.Start = searchRange.End
+        searchRange.End = ActiveDocument.Content.End
+    Loop
+
+    ' 3) Find SmallCaps (direct formatting)
+    Set searchRange = ActiveDocument.Content
+    With searchRange.Find
+        .ClearFormatting
+        .Font.SmallCaps = True
+        .Text = ""
+        .Format = True
+        .Forward = True
+        .Wrap = wdFindStop
+    End With
+
+    Do While searchRange.Find.Execute
+        If searchRange.Style.Type <> wdStyleTypeCharacter Then
+            first40Chars = First40Characters(searchRange.Paragraphs(1))
+            foundText = Trim(searchRange.Text)
+            foundText = Replace(foundText, Chr(13), "")
+            foundText = Replace(foundText, Chr(10), "")
+            ' Debug: Markiere den gefundenen Bereich im Dokument
+            ' searchRange.HighlightColorIndex = wdYellow
+            AddLogEntry "Direkte Kapitälchen ohne Zeichenformat gefunden in Absatz [" & first40Chars & "]: [" & foundText & "]"
+        End If
+
+        searchRange.Start = searchRange.End
+        searchRange.End = ActiveDocument.Content.End
+    Loop
+
+    ' 4) Find Superscript (direct formatting)
+    Set searchRange = ActiveDocument.Content
+    With searchRange.Find
+        .ClearFormatting
+        .Font.Superscript = True
+        .Text = ""
+        .Format = True
+        .Forward = True
+        .Wrap = wdFindStop
+    End With
+
+    Do While searchRange.Find.Execute
+        If searchRange.Style.Type <> wdStyleTypeCharacter Then
+            first40Chars = First40Characters(searchRange.Paragraphs(1))
+            foundText = Trim(searchRange.Text)
+            foundText = Replace(foundText, Chr(13), "")
+            foundText = Replace(foundText, Chr(10), "")
+            ' Debug: Markiere den gefundenen Bereich im Dokument
+            ' searchRange.HighlightColorIndex = wdYellow
+            AddLogEntry "Direkte Hochstellung ohne Zeichenformat gefunden in Absatz [" & first40Chars & "]: [" & foundText & "]"
+        End If
+
+        searchRange.Start = searchRange.End
+        searchRange.End = ActiveDocument.Content.End
+    Loop
+
+    ' 5) Find Subscript (direct formatting)
+    Set searchRange = ActiveDocument.Content
+    With searchRange.Find
+        .ClearFormatting
+        .Font.Subscript = True
+        .Text = ""
+        .Format = True
+        .Forward = True
+        .Wrap = wdFindStop
+    End With
+
+    Do While searchRange.Find.Execute
+        If searchRange.Style.Type <> wdStyleTypeCharacter Then
+            first40Chars = First40Characters(searchRange.Paragraphs(1))
+            foundText = Trim(searchRange.Text)
+            foundText = Replace(foundText, Chr(13), "")
+            foundText = Replace(foundText, Chr(10), "")
+            ' Debug: Markiere den gefundenen Bereich im Dokument
+            ' searchRange.HighlightColorIndex = wdYellow
+            AddLogEntry "Direkte Tiefstellung ohne Zeichenformat gefunden in Absatz [" & first40Chars & "]: [" & foundText & "]"
+        End If
+
+        searchRange.Start = searchRange.End
+        searchRange.End = ActiveDocument.Content.End
+    Loop
 End Sub
 
 
