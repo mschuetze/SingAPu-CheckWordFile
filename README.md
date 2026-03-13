@@ -83,7 +83,7 @@ The script collects all errors in a log file.
 This only needs to be done once.
 1. Open Microsoft Word.
 2. Go to `FILE` > `OPTIONS` > `CUSTOMIZE RIBBON`.
-3. Under CUSTOMIZE THE RIBBON and under MAIN TABS, select the DEVELOPER check box > press OK.
+3. Under `CUSTOMIZE THE RIBBON` and then `MAIN TABS`, select the `DEVELOPER` check box > press OK.
 ![alt text](https://github.com/mschuetze/SingAPu-CheckWordFile/blob/main/image02.png)
 ### Install / update the script 
 1. Go to the github repository.
