@@ -69,6 +69,12 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
   - SuS_Quellcode_Kommentar
   - SuS_Links_und_Literatur_Headline
   - SuS_Links_und_Literatur_Text
+- Check if one of these formats is applied without the corresponding character format, and if so an entry is made in the log file.
+  - BOLD
+  - ITALIC
+  - UPPERCASE
+  - SUPERSCRIPT (hochgestellt)
+  - SUBSCRIPT (tiefgestellt)
 
 The script collects all errors in a log file. 
 
