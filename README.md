@@ -72,7 +72,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
 - Check if one of these formats is applied without the corresponding character format, and if so an entry is made in the log file.
   - BOLD
   - ITALIC
-  - UPPERCASE
+  - UPPERCASE (Kapitälchen)
   - SUPERSCRIPT (hochgestellt)
   - SUBSCRIPT (tiefgestellt)
 
