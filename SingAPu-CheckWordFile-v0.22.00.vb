@@ -1,4 +1,4 @@
-' version 0.21.15
+' version 0.22.00
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -579,14 +579,21 @@ Sub check_italic_formats()
     '-------------------------------------------
     ' Überprüfe, ob bestimmte Formate kursiv sind
     ' Formate dürfen weder als Formatvorlage noch als Standardformatierung kursiv sein
+    '
+    ' v0.21.18: Find.Execute-Schleife ersetzt durch Run-basierten Durchlauf,
+    ' um Endlosschleife bei zusammenhängenden kursiven Bereichen zu vermeiden.
     '-------------------------------------------
     If DebugMode Then MsgBox "Start: Sub 'check_italic_formats'"
 
-    Dim searchRange As Range
+    Dim para As Paragraph
     Dim paraStyle As String
     Dim prohibitedFormats As Variant
     Dim fmt As Variant
-    Dim foundText As String
+    Dim ch As Range
+    Dim runText As String
+    Dim inItalicRun As Boolean
+    Dim alreadyLogged As Boolean
+    Dim paraCounter As Long
 
     prohibitedFormats = Array( _
         "SuS_Headline", "SuS_Subhead1", "SuS_Bild/Tabellenunterschrift", _
@@ -595,33 +602,67 @@ Sub check_italic_formats()
         "SuS_Links_und_Literatur_Headline", "SuS_Links_und_Literatur_Text")
 
     Application.ScreenUpdating = False
+    paraCounter = 0
 
-    ' Einmal über das gesamte Dokument nach direkt kursivem Text suchen
-    Set searchRange = ActiveDocument.Content
-    With searchRange.Find
-        .ClearFormatting
-        .Font.Italic = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop
-    End With
+    For Each para In ActiveDocument.Paragraphs
+        paraCounter = paraCounter + 1
+        If paraCounter Mod 50 = 0 Then DoEvents
 
-    Do While searchRange.Find.Execute
         ' Nur Absatzformate prüfen, keine Zeichenformate
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            paraStyle = searchRange.Paragraphs(1).Style.NameLocal
-            For Each fmt In prohibitedFormats
-                If paraStyle = fmt Then
-                    foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-                    AddLogEntry "Format '" & paraStyle & "' darf nicht kursiv sein: [" & First40Characters(searchRange.Paragraphs(1)) & "] – Textstelle: [" & foundText & "]"
-                    Exit For
+        If para.Style.Type = wdStyleTypeCharacter Then GoTo NextPara_italic
+
+        paraStyle = para.Style.NameLocal
+
+        ' Prüfen ob dieser Absatzstil überhaupt verboten ist – sonst Absatz überspringen
+        Dim isProhibited As Boolean
+        isProhibited = False
+        For Each fmt In prohibitedFormats
+            If paraStyle = fmt Then
+                isProhibited = True
+                Exit For
+            End If
+        Next fmt
+        If Not isProhibited Then GoTo NextPara_italic
+
+        ' Zusammenhängende kursive Runs sammeln und einmal loggen
+        runText = ""
+        inItalicRun = False
+        alreadyLogged = False
+
+        For Each ch In para.Range.Characters
+            ' Letztes Zeichen (Absatzmarke, Chr(13)) überspringen
+            If ch.Text = Chr(13) Or ch.Text = Chr(10) Then
+                ' Laufenden Run abschließen
+                If inItalicRun And Not alreadyLogged And Len(Trim(runText)) > 0 Then
+                    AddLogEntry "Format '" & paraStyle & "' darf nicht kursiv sein: [" & First40Characters(para) & "] – Textstelle: [" & Trim(runText) & "]"
+                    alreadyLogged = True
                 End If
-            Next fmt
+                runText = ""
+                inItalicRun = False
+            ElseIf ch.Font.Italic = True Then
+                ' Zeichenformat-Runs ignorieren (analog zur Original-Bedingung)
+                If ch.Style.Type <> wdStyleTypeCharacter Then
+                    inItalicRun = True
+                    runText = runText & ch.Text
+                End If
+            Else
+                ' Kursiver Run endet – einmal loggen
+                If inItalicRun And Not alreadyLogged And Len(Trim(runText)) > 0 Then
+                    AddLogEntry "Format '" & paraStyle & "' darf nicht kursiv sein: [" & First40Characters(para) & "] – Textstelle: [" & Trim(runText) & "]"
+                    alreadyLogged = True
+                End If
+                runText = ""
+                inItalicRun = False
+            End If
+        Next ch
+
+        ' Letzten Run loggen falls Absatz kursiv endet
+        If inItalicRun And Not alreadyLogged And Len(Trim(runText)) > 0 Then
+            AddLogEntry "Format '" & paraStyle & "' darf nicht kursiv sein: [" & First40Characters(para) & "] – Textstelle: [" & Trim(runText) & "]"
         End If
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
+
+NextPara_italic:
+    Next para
 
     Application.ScreenUpdating = True
 
@@ -635,142 +676,171 @@ Sub check_direct_bold_italic_without_character_style()
     '-------------------------------------------
     ' Prüft auf direktes Fett/Kursiv im Dokument ohne zugeordnetes Zeichenformat
     ' Zusätzlich wird geprüft, ob der Absatzstil für das gefundene Format erlaubt ist.
+    '
+    ' v0.21.18: Alle 5 Find.Execute-Schleifen (Bold, Italic, SmallCaps, Superscript,
+    ' Subscript) ersetzt durch einen einzigen Run-basierten Para-Durchlauf.
+    ' Verhindert Endlosschleife bei zusammenhängenden formatierten Bereichen.
+    ' Alle Log-Meldungen bleiben wortidentisch zur Vorversion.
     '-------------------------------------------
     If DebugMode Then MsgBox "Start: Sub 'check_direct_bold_italic_without_character_style'"
 
-    Dim searchRange As Range
-    Dim first40Chars As String
-    Dim foundText As String
+    Dim para As Paragraph
+    Dim ch As Range
     Dim paraStyle As String
-    Dim allowedBoldFormats As Variant
-    Dim allowedItalicFormats As Variant
     Dim fmt As Variant
     Dim styleAllowed As Boolean
+    Dim paraCounter As Long
 
-    allowedBoldFormats = Array("SuS_Autorname", "SuS_Kastenheadline", "SuS_Absatzheadline", "SuS_Unter_Absatzheadline", "SuS_Kasten_Absatzheadline", "SuS_Tabellenkopf", "SuS_Links_und_Literatur_Headline", "SuS_Interview_Frage", "SuS_Interview_Zitat")
+    ' Laufende Run-Texte für jede Eigenschaft
+    Dim boldRun As String, italicRun As String
+    Dim smallCapsRun As String, superRun As String, subRun As String
+    ' Flags: wurde für diesen Absatz bereits geloggt?
+    Dim boldLogged As Boolean, italicLogged As Boolean
+    Dim smallCapsLogged As Boolean, superLogged As Boolean, subLogged As Boolean
+
+    Dim allowedBoldFormats As Variant
+    Dim allowedItalicFormats As Variant
+
+    allowedBoldFormats = Array("SuS_Autorname", "SuS_Kastenheadline", "SuS_Absatzheadline", _
+        "SuS_Unter_Absatzheadline", "SuS_Kasten_Absatzheadline", "SuS_Tabellenkopf", _
+        "SuS_Links_und_Literatur_Headline", "SuS_Interview_Frage", "SuS_Interview_Zitat")
     allowedItalicFormats = Array("SuS_Autor_Kurzbiografie", "SuS_Interview_Zitat")
 
-    ' Screening-Optimierung: Screen-Refresh deaktivieren
     Application.ScreenUpdating = False
+    paraCounter = 0
 
-    ' -------------------------------------------------------
-    ' Hilfsfunktion: führt eine Format-Suche durch und loggt
-    ' -------------------------------------------------------
+    For Each para In ActiveDocument.Paragraphs
+        paraCounter = paraCounter + 1
+        If paraCounter Mod 50 = 0 Then DoEvents
 
-    ' 1) Bold
-    Set searchRange = ActiveDocument.Content
-    searchRange.Find.ClearFormatting
-    With searchRange.Find
-        .Font.Bold = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop   ' bleibt Stop – aber Range-Verwaltung wird korrigiert
-    End With
+        ' Zeichenformat-Absätze überspringen (analog zur Original-Bedingung)
+        If para.Style.Type = wdStyleTypeCharacter Then GoTo NextPara_bold_italic
 
-    Do While searchRange.Find.Execute
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            paraStyle = searchRange.Paragraphs(1).Style.NameLocal
+        paraStyle = para.Style.NameLocal
+
+        ' Run-Puffer und Logged-Flags für diesen Absatz zurücksetzen
+        boldRun = "":    boldLogged = False
+        italicRun = "":  italicLogged = False
+        smallCapsRun = "": smallCapsLogged = False
+        superRun = "":   superLogged = False
+        subRun = "":     subLogged = False
+
+        For Each ch In para.Range.Characters
+            ' Absatzmarke überspringen
+            If ch.Text = Chr(13) Or ch.Text = Chr(10) Then GoTo NextChar
+
+            ' Zeichenformat-Runs überspringen (kein Zeichenformat = NameLocal ist leer
+            ' oder entspricht dem Standard-Zeichenformat "Standard")
+            Dim csName As String
+            csName = ""
+            On Error Resume Next
+            csName = ch.Style.NameLocal
+            On Error GoTo 0
+            Dim hasCharStyle As Boolean
+            hasCharStyle = (csName <> "" And csName <> "Standard" And _
+                            ch.Style.Type = wdStyleTypeCharacter)
+
+            ' --- 1) BOLD ---
+            If ch.Font.Bold = True And Not hasCharStyle Then
+                boldRun = boldRun & ch.Text
+            Else
+                If Len(Trim(boldRun)) > 0 And Not boldLogged Then
+                    styleAllowed = False
+                    For Each fmt In allowedBoldFormats
+                        If paraStyle = fmt Then styleAllowed = True: Exit For
+                    Next fmt
+                    If Not styleAllowed Then
+                        AddLogEntry "Direktes Fett ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(boldRun) & "]"
+                        boldLogged = True
+                    End If
+                End If
+                boldRun = ""
+            End If
+
+            ' --- 2) ITALIC ---
+            If ch.Font.Italic = True And Not hasCharStyle Then
+                italicRun = italicRun & ch.Text
+            Else
+                If Len(Trim(italicRun)) > 0 And Not italicLogged Then
+                    styleAllowed = False
+                    For Each fmt In allowedItalicFormats
+                        If paraStyle = fmt Then styleAllowed = True: Exit For
+                    Next fmt
+                    If Not styleAllowed Then
+                        AddLogEntry "Direktes Kursiv ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(italicRun) & "]"
+                        italicLogged = True
+                    End If
+                End If
+                italicRun = ""
+            End If
+
+            ' --- 3) SMALLCAPS ---
+            If ch.Font.SmallCaps = True And Not hasCharStyle Then
+                smallCapsRun = smallCapsRun & ch.Text
+            Else
+                If Len(Trim(smallCapsRun)) > 0 And Not smallCapsLogged Then
+                    AddLogEntry "Direkte Kapitälchen ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(smallCapsRun) & "]"
+                    smallCapsLogged = True
+                End If
+                smallCapsRun = ""
+            End If
+
+            ' --- 4) SUPERSCRIPT ---
+            If ch.Font.Superscript = True And Not hasCharStyle Then
+                superRun = superRun & ch.Text
+            Else
+                If Len(Trim(superRun)) > 0 And Not superLogged Then
+                    AddLogEntry "Direkte Hochstellung ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(superRun) & "]"
+                    superLogged = True
+                End If
+                superRun = ""
+            End If
+
+            ' --- 5) SUBSCRIPT ---
+            If ch.Font.Subscript = True And Not hasCharStyle Then
+                subRun = subRun & ch.Text
+            Else
+                If Len(Trim(subRun)) > 0 And Not subLogged Then
+                    AddLogEntry "Direkte Tiefstellung ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(subRun) & "]"
+                    subLogged = True
+                End If
+                subRun = ""
+            End If
+
+NextChar:
+        Next ch
+
+        ' Letzte Runs loggen falls Absatz mit Formatierung endet
+        If Len(Trim(boldRun)) > 0 And Not boldLogged Then
             styleAllowed = False
             For Each fmt In allowedBoldFormats
                 If paraStyle = fmt Then styleAllowed = True: Exit For
             Next fmt
             If Not styleAllowed Then
-                foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-                AddLogEntry "Direktes Fett ohne Zeichenformat in [" & First40Characters(searchRange.Paragraphs(1)) & "]: [" & foundText & "]"
+                AddLogEntry "Direktes Fett ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(boldRun) & "]"
             End If
         End If
-        ' Korrekte Weiterbewegung: Collapse ans Ende statt manuellen Range-Reset
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
-
-    ' 2) Italic
-    Set searchRange = ActiveDocument.Content
-    searchRange.Find.ClearFormatting
-    With searchRange.Find
-        .Font.Italic = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop
-    End With
-
-    Do While searchRange.Find.Execute
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            paraStyle = searchRange.Paragraphs(1).Style.NameLocal
+        If Len(Trim(italicRun)) > 0 And Not italicLogged Then
             styleAllowed = False
             For Each fmt In allowedItalicFormats
                 If paraStyle = fmt Then styleAllowed = True: Exit For
             Next fmt
             If Not styleAllowed Then
-                foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-                AddLogEntry "Direktes Kursiv ohne Zeichenformat in [" & First40Characters(searchRange.Paragraphs(1)) & "]: [" & foundText & "]"
+                AddLogEntry "Direktes Kursiv ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(italicRun) & "]"
             End If
         End If
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
-
-    ' 3) SmallCaps
-    Set searchRange = ActiveDocument.Content
-    searchRange.Find.ClearFormatting
-    With searchRange.Find
-        .Font.SmallCaps = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop
-    End With
-
-    Do While searchRange.Find.Execute
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-            AddLogEntry "Direkte Kapitälchen ohne Zeichenformat in [" & First40Characters(searchRange.Paragraphs(1)) & "]: [" & foundText & "]"
+        If Len(Trim(smallCapsRun)) > 0 And Not smallCapsLogged Then
+            AddLogEntry "Direkte Kapitälchen ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(smallCapsRun) & "]"
         End If
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
-
-    ' 4) Superscript
-    Set searchRange = ActiveDocument.Content
-    searchRange.Find.ClearFormatting
-    With searchRange.Find
-        .Font.Superscript = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop
-    End With
-
-    Do While searchRange.Find.Execute
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-            AddLogEntry "Direkte Hochstellung ohne Zeichenformat in [" & First40Characters(searchRange.Paragraphs(1)) & "]: [" & foundText & "]"
+        If Len(Trim(superRun)) > 0 And Not superLogged Then
+            AddLogEntry "Direkte Hochstellung ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(superRun) & "]"
         End If
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
-
-    ' 5) Subscript
-    Set searchRange = ActiveDocument.Content
-    searchRange.Find.ClearFormatting
-    With searchRange.Find
-        .Font.Subscript = True
-        .Text = ""
-        .Format = True
-        .Forward = True
-        .Wrap = wdFindStop
-    End With
-
-    Do While searchRange.Find.Execute
-        If searchRange.Style.Type <> wdStyleTypeCharacter Then
-            foundText = Trim(Replace(Replace(searchRange.Text, Chr(13), ""), Chr(10), ""))
-            AddLogEntry "Direkte Tiefstellung ohne Zeichenformat in [" & First40Characters(searchRange.Paragraphs(1)) & "]: [" & foundText & "]"
+        If Len(Trim(subRun)) > 0 And Not subLogged Then
+            AddLogEntry "Direkte Tiefstellung ohne Zeichenformat in [" & First40Characters(para) & "]: [" & Trim(subRun) & "]"
         End If
-        searchRange.Collapse wdCollapseEnd
-        searchRange.End = ActiveDocument.Content.End
-    Loop
+
+NextPara_bold_italic:
+    Next para
 
     Application.ScreenUpdating = True
 
@@ -812,6 +882,10 @@ Sub ConsolidatedParagraphChecks()
     Dim styleCounts() As Long
     Dim styleCountIndex As Long
 
+    ' Zähler für DoEvents
+    Dim paraCounter As Long
+    paraCounter = 0
+
     Set invalidStyles = New Collection
     ReDim styleNames(0)
     ReDim styleCounts(0)
@@ -819,6 +893,12 @@ Sub ConsolidatedParagraphChecks()
     styleCount = 0
 
     For Each para In ActiveDocument.Paragraphs
+        paraCounter = paraCounter + 1
+        ' Alle 200 Absätze Kontrolle ans System zurückgeben
+        If paraCounter Mod 200 = 0 Then
+            DoEvents
+        End If
+
         ' check_invalid_styles für Paragraph-Styles
         styleName = para.Style.NameLocal
         If Left(styleName, 4) <> "SuS_" Then
