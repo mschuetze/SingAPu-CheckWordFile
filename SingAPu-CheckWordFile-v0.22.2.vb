@@ -1,4 +1,4 @@
-' version 0.22.00
+' version 0.22.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -23,7 +23,7 @@ Dim first40Chars As String
 Dim previousPara As Paragraph
 Dim nextPara As Paragraph
 Dim styleCount As Long
-Dim logEntries As Collection ' Declare a global collection for log entries
+Dim logEntries As Collection ' Use a collection and dedupe manually
 
 
 
@@ -35,8 +35,12 @@ Sub InitializeLog()
 End Sub
 
 Sub AddLogEntry(entry As String)
-    ' Add a log entry to the collection
-    logEntries.Add Now & " : " & entry
+    ' Add a unique log entry to the collection
+    Dim existingEntry As Variant
+    For Each existingEntry In logEntries
+        If existingEntry = entry Then Exit Sub
+    Next existingEntry
+    logEntries.Add entry
 End Sub
 
 Sub WriteLogEntries()
@@ -51,7 +55,7 @@ Sub WriteLogEntries()
 
     ' Write each log entry to the file
     For Each entry In logEntries
-        Print #logFileNumber, entry & vbCrLf & "----"
+        Print #logFileNumber, Now & " : " & entry & vbCrLf & "----"
     Next entry
 
     ' Close the file
@@ -195,10 +199,7 @@ If InStr(paraText, "|") > 0 Then
     End If
 Else
     ' MsgBox "Der erste Absatz enthält das Zeichen '|' NICHT.", vbExclamation
-    logFile = FreeFile
-    Open logFilePath For Append As logFile
-    Print #logFile, Now & vbCrLf & "Im ersten Absatz fehlt das Zeichen '|' (Pipe)." & vbCrLf & "----" & vbCrLf
-    Close logFile
+    AddLogEntry "Im ersten Absatz fehlt das Zeichen '|' (Pipe)."
 End If
 
 If DebugMode Then MsgBox "Done: CHECK FOR PIPE"
