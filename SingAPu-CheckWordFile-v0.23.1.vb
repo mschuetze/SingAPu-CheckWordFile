@@ -1,4 +1,4 @@
-' version 0.23.0
+' version 0.23.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -66,25 +66,46 @@ Sub ReplaceNonBreakingHyphen()
     Dim rng As Range
     Set rng = ActiveDocument.Content
     
+    ' Zähle zuerst die Anzahl der Vorkommen von geschützten Bindestrichen
+    Dim count As Long
+    count = 0
+    rng.Collapse wdCollapseStart
     With rng.Find
         .ClearFormatting
-        .Replacement.ClearFormatting
-        
-        ' Wir nutzen das interne Word-Kürzel statt des Unicode-Hex-Codes
-        .Text = "^~" 
-        .Replacement.Text = "-"
-        
+        .Text = "^~"
         .Forward = True
-        .Wrap = wdFindContinue
+        .Wrap = wdFindStop
         .Format = False
         .MatchCase = False
         .MatchWholeWord = False
         .MatchWildcards = False
         
-        .Execute Replace:=wdReplaceAll
+        Do While .Execute
+            count = count + 1
+            rng.Collapse wdCollapseEnd
+        Loop
     End With
     
-    AddLogEntry "Es wurden geschützte Bindestriche (Sonderzeichen) durch reguläre Bindestriche ersetzt!"
+    ' Wenn Vorkommen gefunden wurden, ersetze alle
+    If count > 0 Then
+        Set rng = ActiveDocument.Content
+        With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = "^~"
+            .Replacement.Text = "-"
+            .Forward = True
+            .Wrap = wdFindContinue
+            .Format = False
+            .MatchCase = False
+            .MatchWholeWord = False
+            .MatchWildcards = False
+            
+            .Execute Replace:=wdReplaceAll
+        End With
+        
+        AddLogEntry "Es wurden " & count & " geschützte Bindestriche (Sonderzeichen) durch reguläre Bindestriche ersetzt!"
+    End If
 End Sub
 
 
