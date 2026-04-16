@@ -1,4 +1,4 @@
-' version 0.22.2
+' version 0.23.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -60,6 +60,31 @@ Sub WriteLogEntries()
 
     ' Close the file
     Close #logFileNumber
+End Sub
+
+Sub ReplaceNonBreakingHyphen()
+    Dim rng As Range
+    Set rng = ActiveDocument.Content
+    
+    With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        
+        ' Wir nutzen das interne Word-Kürzel statt des Unicode-Hex-Codes
+        .Text = "^~" 
+        .Replacement.Text = "-"
+        
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        
+        .Execute Replace:=wdReplaceAll
+    End With
+    
+    AddLogEntry "Es wurden geschützte Bindestriche (Sonderzeichen) durch reguläre Bindestriche ersetzt!"
 End Sub
 
 
@@ -167,6 +192,8 @@ If Dir(logFilePath) <> "" Then
 End If
 
 If DebugMode Then MsgBox "Done: DELETE LOG FILE"
+
+ReplaceNonBreakingHyphen
 
 
 

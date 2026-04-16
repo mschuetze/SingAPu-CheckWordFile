@@ -31,6 +31,7 @@ A Visual Basic script for MS Word that checks a word file (in our case an articl
     - ?
     - ~
     - `
+- Replaces all non-breaking hyphens (i.e. U+2011) with standard hyphens.
 - Check whether the first paragraph contains a pipe (‘’|”"). If not, an error is output. If it does, the system checks whether the first paragraph has the paragraph format **SuS_Mengentext** - if not, convert automatically.
 - Check whether second paragraph has paragraph format **SuS_Headline** - if not, convert automatically.
 - Check whether exactly 1 paragraph has the paragraph format **SuS_Headline** - if not, output error.
