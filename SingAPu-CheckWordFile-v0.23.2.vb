@@ -1,4 +1,4 @@
-' version 0.23.1
+' version 0.23.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -449,7 +449,7 @@ For Each Absatz In ActiveDocument.Paragraphs
             GoTo NextAbsatz
         End If
 
-        fileToCheckPath = ActiveDocument.Path & "/" & cleanedFileName
+        fileToCheckPath = ActiveDocument.Path & Application.PathSeparator & cleanedFileName
         If Dir(fileToCheckPath) <> "" Then
             ' exakte Datei gefunden -> alles gut
         Else
@@ -466,7 +466,7 @@ For Each Absatz In ActiveDocument.Paragraphs
                 baseNameOnly = cleanedFileName
             End If
             For Each ext In Dateiendung
-                altPath = ActiveDocument.Path & "/" & baseNameOnly & ext
+                altPath = ActiveDocument.Path & Application.PathSeparator & baseNameOnly & ext
                 If Dir(altPath) <> "" Then
                     foundAlternative = True
                     matchedFile = baseNameOnly & ext
