@@ -200,16 +200,24 @@ Sub SingAPu_CheckWordFile()
 '----------------------------------------------------------
 If DebugMode Then MsgBox "Launching: DELETE LOG FILE"
 
-' Set name of log file
-logFileName = "log" & ".txt"
- 
-' Set the path for the log file
-logFilePath = ActiveDocument.Path & "/" & logFileName
-' MsgBox "logFilePath: " & logFilePath
+logFileName = "log.txt"
 
+' Application.PathSeparator wählt automatisch "\" auf Windows und "/" auf Mac OS
+Dim sep As String
+sep = Application.PathSeparator
+
+' Sicherstellen, dass am Ende des Pfads nicht doppelt separiert wird
+If Right(ActiveDocument.Path, 1) = sep Then
+    logFilePath = ActiveDocument.Path & logFileName
+Else
+    logFilePath = ActiveDocument.Path & sep & logFileName
+End If
+
+' Löschen mit Absicherung für Mac & Windows
 If Dir(logFilePath) <> "" Then
-    ' MsgBox "Log-Datei besteht bereits. Wird gelöscht."
+    On Error Resume Next
     Kill logFilePath
+    On Error GoTo 0
 End If
 
 If DebugMode Then MsgBox "Done: DELETE LOG FILE"
