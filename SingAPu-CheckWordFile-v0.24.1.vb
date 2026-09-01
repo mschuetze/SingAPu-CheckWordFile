@@ -1,4 +1,4 @@
-' version 0.23.2
+' version 0.24.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -966,6 +966,53 @@ Sub ConsolidatedParagraphChecks()
 
         ' Count all styles
         UpdateCount styleNames, styleCounts, styleCountIndex, styleName
+
+        ' check_bilddateiname_contains_invalid_characters
+        ' Separate, gezielte Prüfung nur für Absätze mit Format "SuS_Bilddateiname".
+        ' Die ursprüngliche allgemeine Dateinamenprüfung bleibt unverändert.
+        If para.Style = "SuS_Bilddateiname" Then
+            Dim imageRefText As String
+            Dim imageFileName As String
+            Dim imageInvalidList As String
+            Dim imageForbiddenChars As Variant
+            Dim imageForbiddenChar As Variant
+            Dim imageFoundInvalid As Boolean
+            Dim imageChar As String
+            Dim imageIndex As Long
+
+            imageRefText = Replace(para.Range.Text, Chr(13), "")
+            imageRefText = Replace(imageRefText, Chr(10), "")
+            imageInvalidList = ""
+            imageFoundInvalid = False
+
+            If Len(imageRefText) > 0 Then
+                If InStrRev(imageRefText, "/") > 0 Then imageRefText = Mid(imageRefText, InStrRev(imageRefText, "/") + 1)
+                If InStrRev(imageRefText, "\") > 0 Then imageRefText = Mid(imageRefText, InStrRev(imageRefText, "\") + 1)
+
+                imageFileName = imageRefText
+
+                ' Für die Zukunft hier weitere unzulässige Zeichen ergänzen.
+                ' Aktuell nur Leerzeichen prüfen, damit die eigene Validierung eindeutig und separat bleibt.
+                imageForbiddenChars = Array(" ")
+                For imageIndex = 1 To Len(imageFileName)
+                    imageChar = Mid(imageFileName, imageIndex, 1)
+                    For Each imageForbiddenChar In imageForbiddenChars
+                        If imageChar = imageForbiddenChar Then
+                            imageFoundInvalid = True
+                            If InStr(1, imageInvalidList, "Leerzeichen", vbTextCompare) = 0 Then
+                                imageInvalidList = imageInvalidList & "Leerzeichen "
+                            End If
+                            Exit For
+                        End If
+                    Next imageForbiddenChar
+                Next imageIndex
+
+                If imageFoundInvalid Then
+                    first40Chars = First40Characters(para)
+                    AddLogEntry "Absatz ""SuS_Bilddateiname"" enthält ungültige Zeichen: " & Trim(imageInvalidList) & " [" & first40Chars & "]"
+                End If
+            End If
+        End If
 
         ' check_bilddateiname_follows_rule
         If para.Style = "SuS_Bilddateiname" Then
