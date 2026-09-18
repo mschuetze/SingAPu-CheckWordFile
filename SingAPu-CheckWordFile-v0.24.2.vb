@@ -1,4 +1,4 @@
-' version 0.24.1
+' version 0.24.2
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -397,6 +397,7 @@ For Each Absatz In ActiveDocument.Paragraphs
         paraText = Absatz.Range.Text
         cleanedFileName = Replace(paraText, Chr(13), "")
         cleanedFileName = Replace(cleanedFileName, Chr(10), "")
+        cleanedFileName = Replace(cleanedFileName, vbTab, "")
         cleanedFileName = Trim(cleanedFileName)
 
         ' Falls ein kompletter Pfad angegeben ist, nur den Dateinamen extrahieren
@@ -982,6 +983,7 @@ Sub ConsolidatedParagraphChecks()
 
             imageRefText = Replace(para.Range.Text, Chr(13), "")
             imageRefText = Replace(imageRefText, Chr(10), "")
+            imageRefText = Replace(imageRefText, vbTab, "")
             imageInvalidList = ""
             imageFoundInvalid = False
 
