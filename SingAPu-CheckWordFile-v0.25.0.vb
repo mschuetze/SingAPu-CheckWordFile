@@ -1,4 +1,4 @@
-' version 0.24.2
+' version 0.25.0
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -935,7 +935,10 @@ Sub ConsolidatedParagraphChecks()
     Dim counter As Long
     Dim paraText As String
     Dim p As Paragraph
+    Dim boxPara As Paragraph
     Dim offendingText As String
+    Dim forbiddenBoxStyles As Variant
+    Dim boxStyle As Variant
     Dim styleNames() As String
     Dim styleCounts() As Long
     Dim styleCountIndex As Long
@@ -949,6 +952,11 @@ Sub ConsolidatedParagraphChecks()
     ReDim styleCounts(0)
     styleCountIndex = 0
     styleCount = 0
+    forbiddenBoxStyles = Array( _
+        "SuS_Mengentext", "SuS_Absatzheadline", _
+        "SuS_Kastentext_Aufzaehlung_gegliedert", _
+        "SuS_Kastentext_Aufzaehlung_nummeriert", _
+        "SuS_Unter_Absatzheadline")
 
     For Each para In ActiveDocument.Paragraphs
         paraCounter = paraCounter + 1
@@ -1059,6 +1067,18 @@ Sub ConsolidatedParagraphChecks()
         If para.Style = "SuS_Kastenheadline" Then
             styleCount = styleCount + 1
             If styleCount Mod 2 <> 0 Then
+                Set boxPara = para.Next
+                Do While Not boxPara Is Nothing
+                    If boxPara.Style = "SuS_Kastenheadline" Then Exit Do
+                    For Each boxStyle In forbiddenBoxStyles
+                        If boxPara.Style.NameLocal = CStr(boxStyle) Then
+                            AddLogEntry "Absatzformat '" & CStr(boxStyle) & "' ist innerhalb eines Kastens nicht erlaubt: [" & First40Characters(boxPara) & "]"
+                            Exit For
+                        End If
+                    Next boxStyle
+                    Set boxPara = boxPara.Next
+                Loop
+
                 If Not para.Previous Is Nothing Then
                     Set previousPara = para.Previous
                     If Not previousPara Is Nothing Then
