@@ -1,4 +1,4 @@
-' version 0.25.0
+' version 0.25.1
 
 '----------------------------------------------------------
 '----- SET GLOBAL VARIABLES -----
@@ -953,9 +953,25 @@ Sub ConsolidatedParagraphChecks()
     styleCountIndex = 0
     styleCount = 0
     forbiddenBoxStyles = Array( _
-        "SuS_Mengentext", "SuS_Absatzheadline", _
-        "SuS_Kastentext_Aufzaehlung_gegliedert", _
-        "SuS_Kastentext_Aufzaehlung_nummeriert", _
+        "SuS_Absatzheadline", _
+        "SuS_Aufzaehlung_gegliedert", _
+        "SuS_Aufzaehlung_nummeriert", _
+        "SuS_Aufzählung_zweite_Ebene", _
+        "SuS_Autor_Kurzbiographie", _
+        "SuS_Autorname", _
+        "SuS_Biographie", _
+        "SuS_Headline", _
+        "SuS_Interview_Antwort", _
+        "SuS_Interview_Frage", _
+        "SuS_Interview_Zitat", _
+        "SuS_Kursiv", _
+        "SuS_Links_und_Literatur_Headline", _
+        "SuS_Links_und_Literatur_Text", _
+        "SuS_Mengentext", _
+        "SuS_Rezensent", _
+        "SuS_Subhead_1", _
+        "SuS_Subhead_2", _
+        "SuS_Tabellentext", _
         "SuS_Unter_Absatzheadline")
 
     For Each para In ActiveDocument.Paragraphs
@@ -1072,7 +1088,11 @@ Sub ConsolidatedParagraphChecks()
                     If boxPara.Style = "SuS_Kastenheadline" Then Exit Do
                     For Each boxStyle In forbiddenBoxStyles
                         If boxPara.Style.NameLocal = CStr(boxStyle) Then
-                            AddLogEntry "Absatzformat '" & CStr(boxStyle) & "' ist innerhalb eines Kastens nicht erlaubt: [" & First40Characters(boxPara) & "]"
+                            If CStr(boxStyle) = "SuS_Kursiv" Then
+                                AddLogEntry "Absatzformat 'SuS_Kursiv' ist innerhalb eines Kastens nicht erlaubt. Bitte 'SuS_Kastentext_Kursiv' verwenden: [" & First40Characters(boxPara) & "]"
+                            Else
+                                AddLogEntry "Absatzformat '" & CStr(boxStyle) & "' ist innerhalb eines Kastens nicht erlaubt: [" & First40Characters(boxPara) & "]"
+                            End If
                             Exit For
                         End If
                     Next boxStyle
